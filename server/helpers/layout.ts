@@ -4,12 +4,9 @@ import {
   LAYOUT_ANGLES,
   SVG_CONFIG,
   SPREAD_MULTIPLIER,
+  CHARM_SHAPE_CONFIG,
 } from './constants';
 
-/**
- * Determine which flower variant to use based on position in the bouquet.
- * Left-most flowers get 'left' variants, center gets 'center', right-most get 'right'.
- */
 export function getFlowerPosition(
   slotIndex: number,
   totalSlots: number,
@@ -21,27 +18,16 @@ export function getFlowerPosition(
   return 'center';
 }
 
-/**
- * Generate layout template for a bouquet using the stem-base rotation approach.
- *
- * All flowers share a single binding point (the convergence point of all stems).
- * Each flower is rotated around its stem base (which maps to the binding point)
- * by the layout angle for its slot position. This creates a natural fan effect
- * where stems radiate outward from the binding point.
- *
- * The spread multiplier adjusts the angular range to fit different charm shapes
- * (e.g., oval shapes need a narrower spread than coin shapes).
- */
 export function generateLayout(
   flowers: Array<FlowerSVG | null>,
   charmShape: CharmShape,
 ): LayoutTemplate {
   const { viewBoxWidth, viewBoxHeight } = SVG_CONFIG;
+  const config = CHARM_SHAPE_CONFIG[charmShape] ?? CHARM_SHAPE_CONFIG.coin;
 
-  // Binding point: where all stems converge (lower-center of the output)
   const bindingPoint: Point = {
-    x: viewBoxWidth / 2,
-    y: viewBoxHeight * 0.83,
+    x: viewBoxWidth * config.bindingPointX,
+    y: viewBoxHeight * config.bindingPointY,
   };
 
   const flowerCount = flowers.length;
@@ -50,20 +36,24 @@ export function generateLayout(
 
   const slots: FlowerSlot[] = baseAngles.map((baseAngle, index) => {
     const flower = flowers[index];
+    let angle = baseAngle * spreadMult + (flower?.baseRotation ?? 0);
 
-    // Apply spread multiplier for charm shape
-    let angle = baseAngle * spreadMult;
-
-    // Add per-flower rotation offset if defined (for flowers with natural stem tilt)
-    if (flower?.rotation) {
-      angle += flower.rotation;
-    }
+    const transformCenter = flower?.transformCenter
+      ? {
+          x: flower.transformCenter.x * flower.width,
+          y: flower.transformCenter.y * flower.height,
+        }
+      : {
+          x: (flower?.width ?? 0) / 2,
+          y: (flower?.height ?? 0) * 0.75,
+        };
 
     return {
-      position: { ...bindingPoint },
-      angle,
-      tilt: angle,
-      scale: 1,
+      position: {
+        x: bindingPoint.x - transformCenter.x,
+        y: bindingPoint.y - transformCenter.y,
+      },
+      rotation: angle,
     };
   });
 

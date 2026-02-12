@@ -1,7 +1,3 @@
-/**
- * API Routes for Bouquet Generator
- */
-
 import type { Express, Request, Response } from 'express';
 import { createServer, type Server } from 'http';
 import { generateBouquetSchema } from '@shared/schema';
@@ -11,28 +7,14 @@ import {
   parseCharmTypeFromSKU,
 } from './helpers/bouquet-generator';
 import { checkAssetsExist } from './helpers/svg-utils';
+import { FLOWER_FILES } from './helpers/constants';
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express,
 ): Promise<Server> {
-  /**
-   * POST /api/bouquet
-   *
-   * Generate a bouquet SVG from flower selections
-   * Saves result to ./generated_svg directory
-   *
-   * Request body:
-   * {
-   *   "flowers": ["Februari", "April", "Augustus", "December"],
-   *   "charmShape": "coin"  // optional
-   * }
-   *
-   * Response: { "ok": true, "filename": "bouquet_xxx.svg" }
-   */
   app.post('/api/bouquet', async (req: Request, res: Response) => {
     try {
-      // Validate request
       const parseResult = generateBouquetSchema.safeParse(req.body);
 
       if (!parseResult.success) {
@@ -43,7 +25,6 @@ export async function registerRoutes(
         });
       }
 
-      // Generate bouquet and save to file
       const result = await generateBouquet(parseResult.data);
 
       return res.json({
@@ -61,14 +42,8 @@ export async function registerRoutes(
     }
   });
 
-  /**
-   * POST /api/bouquet/from-order
-   *
-   * Generate bouquets from Shopify order data
-   */
   app.post('/api/bouquet/from-order', async (req: Request, res: Response) => {
     try {
-      // Handle both wrapped and unwrapped formats
       const orderData = req.body.order || req.body;
 
       if (!orderData.line_items || !Array.isArray(orderData.line_items)) {
@@ -116,10 +91,46 @@ export async function registerRoutes(
     }
   });
 
-  /**
-   * GET /api/bouquet/status
-   * Health check endpoint
-   */
+  app.get('/api/flowers', (_req: Request, res: Response) => {
+    const flowers: Record<
+      string,
+      {
+        left: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
+        center: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
+        right: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
+      }
+    > = {};
+    const pathsSet = new Set<string>();
+
+    for (const [month, positions] of Object.entries(FLOWER_FILES)) {
+      flowers[month] = {
+        left: {
+          path: positions.left.path,
+          transformCenter: positions.left.transformCenter,
+          baseRotation: positions.left.baseRotation,
+        },
+        center: {
+          path: positions.center.path,
+          transformCenter: positions.center.transformCenter,
+          baseRotation: positions.center.baseRotation,
+        },
+        right: {
+          path: positions.right.path,
+          transformCenter: positions.right.transformCenter,
+          baseRotation: positions.right.baseRotation,
+        },
+      };
+      pathsSet.add(positions.left.path).add(positions.center.path).add(positions.right.path);
+    }
+
+    return res.json({
+      flowers,
+      paths: [...pathsSet].sort(),
+      months: Object.keys(FLOWER_FILES),
+      positions: ['left', 'center', 'right'] as const,
+    });
+  });
+
   app.get('/api/bouquet/status', (_req: Request, res: Response) => {
     return res.json({
       ok: true,

@@ -4,7 +4,6 @@ import { rm } from "fs/promises";
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
 
-  console.log("building server...");
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",

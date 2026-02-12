@@ -1,9 +1,14 @@
 January,June,February
 June Single flower
+Januari,Juni,Februari
+
 
 April,September,February (single)
+April,September,Februari
 
 June,February,May (with leaf right)
+Juni,Februari,Mei
 June - Not signel flower
 
 September,October(single flower),July,May
+September,Oktober,Juli,Mei

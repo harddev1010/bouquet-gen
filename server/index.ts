@@ -1,6 +1,11 @@
 import express, { type Request, Response, NextFunction } from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { registerRoutes } from './routes';
 import { createServer } from 'http';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +26,10 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'));
+app.use(
+  '/flowers',
+  express.static(path.join(__dirname, '../assets/flowers')),
+);
 
 export function log(message: string, source = 'express') {
   const formattedTime = new Date().toLocaleTimeString('en-US', {
@@ -29,8 +38,6 @@ export function log(message: string, source = 'express') {
     second: '2-digit',
     hour12: true,
   });
-
-  // console.log(`${formattedTime} [${source}] ${message}`);
 }
 
 app.use((req, res, next) => {

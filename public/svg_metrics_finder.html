@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVG Metrics Finder</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .svg-wrapper {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #f8f9fa;
+      }
+      .svg-container svg {
+        display: block;
+        cursor: crosshair;
+      }
+      #svgMount,
+      #svgMountRotate {
+        overflow: hidden;
+      }
+      .rotate-inner {
+        overflow: hidden;
+      }
+      .rotate-container {
+        position: relative;
+      }
+      .rotate-container svg {
+        cursor: grab;
+      }
+      .rotate-container svg:active {
+        cursor: grabbing;
+      }
+      .point-viewport {
+        width: auto;
+        height: 600px;
+        background: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .point-viewport .svg-wrapper {
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container py-4">
+      <h1 class="mb-4">SVG Metrics Finder</h1>
+
+      <div class="row g-3 mb-3">
+        <div class="col-auto">
+          <label class="form-label mb-0">Month</label>
+          <select id="month" class="form-select" disabled>
+            <option value="">Loading...</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <label class="form-label mb-0">Position</label>
+          <select id="position" class="form-select" disabled>
+            <option value="">Loading...</option>
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card mb-3">
+        <div
+          class="card-header bg-white d-flex align-items-center flex-wrap justify-content-between gap-2"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <label class="mb-0">
+              <span class="me-1">Rotation:</span>
+              <input
+                type="number"
+                id="rotationInput"
+                class="form-control form-control-sm d-inline-block"
+                style="width: 5em"
+                value="0"
+                step="0.5"
+              />
+              <span class="ms-1">°</span>
+            </label>
+          </div>
+          <div
+            class="p-2 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 text-end fw-monospace small d-none"
+            id="coordsDisplay"
+          >
+            <div id="coordsText">
+              Click inside the left SVG to see coordinates.
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <p id="emptyState" class="text-muted mb-0">
+            Select month and position to load flower SVG.
+          </p>
+          <p id="errorMsg" class="text-danger mb-0" style="display: none"></p>
+          <div id="viewerContent" class="d-none">
+            <div class="row g-3">
+              <div class="col-auto">
+                <div class="text-muted small mb-1">Click to select point</div>
+                <div class="point-viewport">
+                  <div class="svg-wrapper" id="svgWrapper">
+                    <div id="svgMount"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-auto">
+                <div class="text-muted small mb-1">Rotate</div>
+                <div class="svg-wrapper rotate-container" id="svgWrapperRotate">
+                  <div id="svgMountRotate"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const FIXED_HEIGHT = 500;
+      const ROTATE_VIEWPORT_SIZE = 600;
+      const CIRCLE_DISPLAY_RADIUS = 5;
+      const CIRCLE_OUTLINE_RADIUS = 12;
+
+      let flowerData = null;
+      let markerCircles = [];
+      let currentRotation = 0;
+      let rotateStartX = 0;
+      let rotateStartAngle = 0;
+      let isRotating = false;
+      let rotateAbortController = null;
+      let currentMonth = null;
+      let currentPosition = null;
+      let lastClickedPoint = null;
+
+      const metricsStore = {};
+
+      function getMetricsKey(month, position) {
+        return `${month || currentMonth}-${position || currentPosition}`;
+      }
+
+      function saveMetrics() {
+        if (!currentMonth || !currentPosition) return;
+        const key = getMetricsKey();
+        const pctX = lastClickedPoint?.pctX ?? 0;
+        const pctY = lastClickedPoint?.pctY ?? 0;
+        metricsStore[key] = { pctX, pctY, rotation: currentRotation };
+      }
+
+      function calculateBaseRotation(centerPct, stemTipPct = { x: 0.5, y: 1 }) {
+        const dx = stemTipPct.x - centerPct.x;
+        const dy = stemTipPct.y - centerPct.y;
+        const angleRad = Math.atan2(dx, dy);
+        return (-angleRad * 180) / Math.PI;
+      }
+
+      async function loadFlowerList() {
+        const res = await fetch('/api/flowers');
+        if (!res.ok) throw new Error('Failed to load flower list');
+        flowerData = await res.json();
+        for (const month of flowerData.months) {
+          for (const position of flowerData.positions) {
+            const info = flowerData.flowers[month]?.[position];
+            if (info) {
+              const key = `${month}-${position}`;
+              metricsStore[key] = {
+                pctX: info.transformCenter.x,
+                pctY: info.transformCenter.y,
+                rotation: info.baseRotation,
+              };
+            }
+          }
+        }
+      }
+
+      function initSelects() {
+        const monthSelect = document.getElementById('month');
+        const positionSelect = document.getElementById('position');
+
+        monthSelect.innerHTML = '';
+        for (const m of flowerData.months) {
+          const label = m.charAt(0).toUpperCase() + m.slice(1);
+          monthSelect.appendChild(new Option(label, m));
+        }
+        monthSelect.disabled = false;
+
+        positionSelect.innerHTML =
+          '<option value="left">Left</option>' +
+          '<option value="center">Center</option>' +
+          '<option value="right">Right</option>';
+        positionSelect.disabled = false;
+      }
+
+      async function loadSvg(path) {
+        const res = await fetch('/flowers/' + path);
+        if (!res.ok) throw new Error('Failed to load SVG: ' + res.status);
+        return res.text();
+      }
+
+      function parseViewBox(svgEl) {
+        const vb = svgEl.getAttribute('viewBox');
+        if (vb) {
+          const parts = vb.trim().split(/\s+/);
+          if (parts.length >= 4) {
+            return {
+              x: parseFloat(parts[0]),
+              y: parseFloat(parts[1]),
+              w: parseFloat(parts[2]),
+              h: parseFloat(parts[3]),
+            };
+          }
+        }
+        const w = parseFloat(svgEl.getAttribute('width')) || 100;
+        const h = parseFloat(svgEl.getAttribute('height')) || 100;
+        return { x: 0, y: 0, w, h };
+      }
+
+      function createMarkerCircles(svgEl, svgPt, origHeight) {
+        markerCircles.forEach((c) => c.remove());
+        markerCircles = [];
+
+        const scale = FIXED_HEIGHT / origHeight;
+        const rInner = CIRCLE_DISPLAY_RADIUS / scale;
+        const rOuter = CIRCLE_OUTLINE_RADIUS / scale;
+
+        const inner = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'circle',
+        );
+        inner.setAttribute('cx', svgPt.x);
+        inner.setAttribute('cy', svgPt.y);
+        inner.setAttribute('r', rInner);
+        inner.setAttribute('fill', 'red');
+        inner.setAttribute('pointer-events', 'none');
+
+        const outer = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'circle',
+        );
+        outer.setAttribute('cx', svgPt.x);
+        outer.setAttribute('cy', svgPt.y);
+        outer.setAttribute('r', rOuter);
+        outer.setAttribute('fill', 'none');
+        outer.setAttribute('stroke', 'red');
+        outer.setAttribute('stroke-width', 2);
+        outer.setAttribute('pointer-events', 'none');
+
+        svgEl.appendChild(outer);
+        svgEl.appendChild(inner);
+        markerCircles = [outer, inner];
+      }
+
+      function setupClickHandler(svgEl, origHeight, vb) {
+        svgEl.addEventListener('click', (e) => {
+          const pt = svgEl.createSVGPoint();
+          pt.x = e.clientX;
+          pt.y = e.clientY;
+          const svgPt = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+
+          const hasViewBox =
+            svgEl.hasAttribute('viewBox') && svgEl.viewBox.baseVal.width > 0;
+          const extent = hasViewBox
+            ? {
+                x: svgEl.viewBox.baseVal.x,
+                y: svgEl.viewBox.baseVal.y,
+                w: svgEl.viewBox.baseVal.width,
+                h: svgEl.viewBox.baseVal.height,
+              }
+            : {
+                x: 0,
+                y: 0,
+                w: svgEl.width.baseVal.value,
+                h: svgEl.height.baseVal.value,
+              };
+
+          const pctX =
+            Math.round(((svgPt.x - extent.x) / extent.w) * 1000) / 1000;
+          const pctY =
+            Math.round(((svgPt.y - extent.y) / extent.h) * 1000) / 1000;
+
+          lastClickedPoint = { pctX, pctY };
+          document.getElementById('coordsText').innerHTML =
+            `x: <b>${pctX}</b>, y: <b>${pctY}</b>`;
+
+          createMarkerCircles(svgEl, svgPt, origHeight);
+
+          saveMetrics();
+          updateRotationDisplay();
+        });
+      }
+
+      function updateRotateViewer(deg) {
+        const mount = document.getElementById('svgMountRotate');
+        const inner = mount?.querySelector('.rotate-inner');
+        if (inner) {
+          inner.style.transform = `rotate(${deg}deg)`;
+        }
+        const input = document.getElementById('rotationInput');
+        if (input) input.value = deg.toFixed(1);
+        currentRotation = deg;
+        saveMetrics();
+        updateRotationDisplay();
+      }
+
+      function updateRotationDisplay() {
+        const el = document.getElementById('rotationValue');
+        if (el) el.textContent = currentRotation.toFixed(1);
+      }
+
+      function setupRotateHandlers(mount, scale) {
+        rotateAbortController?.abort();
+        isRotating = false;
+        rotateAbortController = new AbortController();
+        const { signal } = rotateAbortController;
+
+        const inner = mount.querySelector('.rotate-inner');
+        const input = document.getElementById('rotationInput');
+
+        input.addEventListener(
+          'change',
+          () => {
+            const val = parseFloat(input.value) || 0;
+            currentRotation = val;
+            updateRotateViewer(val);
+          },
+          { signal },
+        );
+        input.addEventListener(
+          'input',
+          () => {
+            const val = parseFloat(input.value) || 0;
+            if (!isNaN(val)) {
+              currentRotation = val;
+              const innerEl = mount.querySelector('.rotate-inner');
+              if (innerEl) innerEl.style.transform = `rotate(${val}deg)`;
+              updateRotationDisplay();
+            }
+          },
+          { signal },
+        );
+
+        mount.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!inner) return;
+            isRotating = true;
+            rotateStartX = e.clientX;
+            rotateStartAngle = currentRotation;
+          },
+          { signal },
+        );
+
+        document.addEventListener(
+          'mousemove',
+          (e) => {
+            if (!isRotating) return;
+            const dx = e.clientX - rotateStartX;
+            currentRotation = rotateStartAngle + dx * 0.5;
+            updateRotateViewer(currentRotation);
+          },
+          { signal },
+        );
+
+        document.addEventListener(
+          'mouseup',
+          () => {
+            isRotating = false;
+          },
+          { signal },
+        );
+      }
+
+      async function showSvg(path, month, position) {
+        const wrapper = document.getElementById('svgWrapper');
+        const wrapperRotate = document.getElementById('svgWrapperRotate');
+        const mount = document.getElementById('svgMount');
+        const mountRotate = document.getElementById('svgMountRotate');
+        const emptyState = document.getElementById('emptyState');
+        const viewerContent = document.getElementById('viewerContent');
+        const errorMsg = document.getElementById('errorMsg');
+
+        currentMonth = month;
+        currentPosition = position;
+
+        emptyState.style.display = 'none';
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+
+        const flowerInfo = flowerData?.flowers[month]?.[position];
+        const baseRotation = flowerInfo?.baseRotation ?? 0;
+        const stored = metricsStore[getMetricsKey()] ?? null;
+        currentRotation = stored?.rotation ?? baseRotation;
+        lastClickedPoint = stored
+          ? { pctX: stored.pctX, pctY: stored.pctY }
+          : null;
+        document.getElementById('rotationInput').value =
+          currentRotation.toFixed(1);
+        updateRotationDisplay();
+
+        try {
+          const svgText = await loadSvg(path);
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(svgText, 'image/svg+xml');
+          const svgEl = doc.querySelector('svg');
+          if (!svgEl) throw new Error('No SVG element in file');
+
+          const vb = parseViewBox(svgEl);
+          const scale = FIXED_HEIGHT / vb.h;
+          const displayWidth = vb.w * scale;
+
+          mount.innerHTML = '';
+          mount.style.width = displayWidth + 'px';
+          mount.style.height = FIXED_HEIGHT + 'px';
+          mount.style.transformOrigin = '0 0';
+
+          svgEl.style.transform = `scale(${scale})`;
+          svgEl.style.transformOrigin = '0 0';
+          mount.appendChild(svgEl);
+
+          wrapper.style.width = displayWidth + 'px';
+          wrapper.style.height = FIXED_HEIGHT + 'px';
+
+          markerCircles.forEach((c) => c.remove());
+          markerCircles = [];
+
+          if (stored && (stored.pctX !== 0 || stored.pctY !== 0)) {
+            const extent =
+              svgEl.hasAttribute('viewBox') && svgEl.viewBox?.baseVal?.width > 0
+                ? {
+                    x: svgEl.viewBox.baseVal.x,
+                    y: svgEl.viewBox.baseVal.y,
+                    w: svgEl.viewBox.baseVal.width,
+                    h: svgEl.viewBox.baseVal.height,
+                  }
+                : {
+                    x: 0,
+                    y: 0,
+                    w: svgEl.width.baseVal.value,
+                    h: svgEl.height.baseVal.value,
+                  };
+            const svgPt = {
+              x: extent.x + stored.pctX * extent.w,
+              y: extent.y + stored.pctY * extent.h,
+            };
+            document.getElementById('coordsText').innerHTML =
+              `x: <b>${stored.pctX}</b>, y: <b>${stored.pctY}</b>`;
+            createMarkerCircles(svgEl, svgPt, extent.h);
+          } else {
+            document.getElementById('coordsText').textContent =
+              'Click inside the left SVG to see coordinates.';
+          }
+
+          setupClickHandler(svgEl, vb.h, vb);
+
+          const doc2 = parser.parseFromString(svgText, 'image/svg+xml');
+          const svgEl2 = doc2.querySelector('svg');
+
+          const viewportSize = ROTATE_VIEWPORT_SIZE;
+          const offsetX = (viewportSize - displayWidth) / 2;
+          const offsetY = (viewportSize - FIXED_HEIGHT) / 2;
+
+          mountRotate.innerHTML = '';
+          mountRotate.style.width = viewportSize + 'px';
+          mountRotate.style.height = viewportSize + 'px';
+          mountRotate.dataset.scale = scale;
+
+          const inner = document.createElement('div');
+          inner.className = 'rotate-inner';
+          inner.style.cssText = `position:absolute;left:${offsetX}px;top:${offsetY}px;width:${displayWidth}px;height:${FIXED_HEIGHT}px;transform-origin:50% 50%;transform:rotate(${currentRotation}deg);`;
+          svgEl2.style.transform = `scale(${scale})`;
+          svgEl2.style.transformOrigin = '0 0';
+          inner.appendChild(svgEl2);
+          mountRotate.appendChild(inner);
+          mountRotate.style.position = 'relative';
+
+          wrapperRotate.style.width = viewportSize + 'px';
+          wrapperRotate.style.height = viewportSize + 'px';
+
+          viewerContent.classList.remove('d-none');
+          document.getElementById('coordsDisplay').classList.remove('d-none');
+
+          setupRotateHandlers(mountRotate, scale);
+        } catch (err) {
+          errorMsg.textContent = err.message || 'Failed to load SVG';
+          errorMsg.style.display = 'block';
+          viewerContent.classList.add('d-none');
+          document.getElementById('coordsDisplay').classList.add('d-none');
+        }
+      }
+
+      function onSelectChange() {
+        const month = document.getElementById('month').value;
+        const position = document.getElementById('position').value;
+        if (!month || !position || !flowerData) return;
+
+        const flowerInfo = flowerData.flowers[month]?.[position];
+        if (!flowerInfo) return;
+
+        showSvg(flowerInfo.path, month, position);
+      }
+
+      (async () => {
+        try {
+          await loadFlowerList();
+          initSelects();
+          document.getElementById('month').addEventListener('change', () => {
+            document.getElementById('position').value = 'left';
+            onSelectChange();
+          });
+          document
+            .getElementById('position')
+            .addEventListener('change', onSelectChange);
+
+          const firstMonth = flowerData.months[0];
+          if (firstMonth) {
+            document.getElementById('month').value = firstMonth;
+            document.getElementById('position').value = 'left';
+            onSelectChange();
+          }
+        } catch (err) {
+          document.getElementById('month').innerHTML =
+            '<option value="">Error loading flowers</option>';
+          document.getElementById('errorMsg').textContent =
+            err.message || 'Failed to load flower list';
+          document.getElementById('errorMsg').style.display = 'block';
+        }
+      })();
+    </script>
+  </body>
+</html>

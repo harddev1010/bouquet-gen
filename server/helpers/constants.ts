@@ -1,10 +1,6 @@
-/**
- * Constants for bouquet generation
- */
-
 import type { CharmShape } from '@shared/schema';
+import { Point } from './types';
 
-// Month to flower name mapping (Dutch -> English)
 export const MONTH_TO_FLOWER: Record<string, string> = {
   Januari: 'january',
   Februari: 'february',
@@ -20,75 +16,222 @@ export const MONTH_TO_FLOWER: Record<string, string> = {
   December: 'december',
 };
 
-type FlowerAsset = string | { path: string; angle: number };
+type FlowerAsset = {
+  path: string;
+  transformCenter: Point;
+  baseRotation: number;
+};
+
 export const FLOWER_FILES: Record<
   string,
   { left: FlowerAsset; center: FlowerAsset; right: FlowerAsset }
 > = {
   january: {
-    left: 'january_simple_mostly_used_in_the_middle.svg',
-    center: 'january_simple_mostly_used_in_the_middle.svg',
-    right: 'january_mirrored_mostly_used_right.svg',
+    left: {
+      path: 'january_mostly_used_left.svg',
+      transformCenter: { x: 0.615, y: 0.785 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'january_simple_mostly_used_in_the_middle.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'january_mirrored_mostly_used_right.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   february: {
-    left: 'february_mirrored_leaf_left_side.svg',
-    center: 'february_flower.svg',
-    right: 'february_leaf_right_side.svg',
+    left: {
+      path: 'february_single_flower_mirrored_leaf_left_side.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'february_single_flower.svg',
+      transformCenter: { x: 0.643, y: 0.76 },
+      baseRotation: 13.5,
+    },
+    right: {
+      path: 'february_leaf_right_side.svg',
+      transformCenter: { x: 0.7, y: 0.81 },
+      baseRotation: 25.5,
+    },
   },
   march: {
-    left: 'march_single_flower.svg',
-    center: 'march_flower.svg',
-    right: 'march_single_flower_mirrored.svg',
+    left: {
+      path: 'march_single_flower.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'march_flower.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'march_single_flower_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   april: {
-    left: 'april_mostly_used_left.svg',
-    center: 'april_mostly_used_left.svg',
-    right: 'april_mirrored_mostly_used_right.svg',
+    left: {
+      path: 'april_mostly_used_left.svg',
+      transformCenter: { x: 0.837, y: 0.813 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'april_mostly_used_left.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'april_mirrored_mostly_used_right.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   may: {
-    left: 'may.svg',
-    center: 'may_without_leafs.svg',
-    right: 'may_mirrored.svg',
+    left: {
+      path: 'may_mirrored_with_leaf_left.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'may_without_leafs.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'may_with_leaf_right.svg',
+      transformCenter: { x: 0.628, y: 0.764 },
+      baseRotation: 22.0,
+    },
   },
   june: {
-    left: 'june_single_flower.svg',
-    center: 'june_single_flower.svg',
-    right: 'june_single_flower_mirrored.svg',
+    left: {
+      path: 'june_single_flower.svg',
+      transformCenter: { x: 0.342, y: 0.752 },
+      baseRotation: -23.0,
+    },
+    center: {
+      path: 'june_single_flower.svg',
+      transformCenter: { x: 0.343, y: 0.752 },
+      baseRotation: -21.5,
+    },
+    right: {
+      path: 'june_single_flower_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   july: {
-    left: 'july_single_flower.svg',
-    center: 'july.svg',
-    right: 'july_single_flower_mirrored.svg',
+    left: {
+      path: 'july_single_flower_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'july_single_flower.svg',
+      transformCenter: { x: 0.297, y: 0.806 },
+      baseRotation: 2.0,
+    },
+    right: {
+      path: 'july_single_flower.svg',
+      transformCenter: { x: 0.297, y: 0.806 },
+      baseRotation: 2.0,
+    },
   },
   august: {
-    left: 'august_single_flower.svg',
-    center: 'august.svg',
-    right: 'august_single_flower_mirrored.svg',
+    left: {
+      path: 'august_single_flower.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'august.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'august_single_flower_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   september: {
-    left: 'september_simpel.svg',
-    center: 'september.svg',
-    right: 'september_simpel_mirrored.svg',
+    left: {
+      path: 'september_simpel_mirrored.svg',
+      transformCenter: { x: 0.556, y: 0.714 },
+      baseRotation: -6.0,
+    },
+    center: {
+      path: 'september_simpel.svg',
+      transformCenter: { x: 0.514, y: 0.801 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'september_simpel.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   october: {
-    left: 'october_single_flower.svg',
-    center: 'october.svg',
-    right: 'october_single_flower_mirrored.svg',
+    left: {
+      path: 'october_single_flower.svg',
+      transformCenter: { x: 0.494, y: 0.828 },
+      baseRotation: -2.0,
+    },
+    center: {
+      path: 'october_single_flower.svg',
+      transformCenter: { x: 0.494, y: 0.828 },
+      baseRotation: 2.0,
+    },
+    right: {
+      path: 'october_single_flower_mirrored.svg',
+      transformCenter: { x: 0.494, y: 0.828 },
+      baseRotation: 0,
+    },
   },
   november: {
-    left: 'november_less_leafs.svg',
-    center: 'november.svg',
-    right: 'november_less_leafs_mirrored.svg',
+    left: {
+      path: 'november_less_leafs.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'november.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'november_less_leafs_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
   december: {
-    left: 'december_single_flower.svg',
-    center: 'december.svg',
-    right: 'december_single_flower_mirrored.svg',
+    left: {
+      path: 'december_single_flower.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    center: {
+      path: 'december.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
+    right: {
+      path: 'december_single_flower_mirrored.svg',
+      transformCenter: { x: 0, y: 0 },
+      baseRotation: 0,
+    },
   },
 };
 
-// Angular spread based on flower count (degrees from vertical)
-// Each flower is rotated around its stem base by this angle
 export const LAYOUT_ANGLES: Record<number, number[]> = {
   1: [0],
   2: [-25, 25],
@@ -97,26 +240,49 @@ export const LAYOUT_ANGLES: Record<number, number[]> = {
   5: [-45, -22, 0, 22, 45],
 };
 
-// Target height for all flowers after scaling (in output SVG units)
-export const BASE_FLOWER_HEIGHT = 250;
+export const BASE_FLOWER_HEIGHT = 270;
 
-// Spread multiplier for different charm shapes
-// Adjusts the angular spread to fit the engraving shape
 export const SPREAD_MULTIPLIER: Record<CharmShape, number> = {
   coin: 1.0,
-  round: 0.9,
-  oval: 0.65,
-  heart: 0.85,
+  round: 1.0,
+  oval: 1.0,
+  heart: 1.0,
 };
 
-// Per-file stem base overrides as fractions of (width, height)
-// Default for all flowers is { x: 0.5, y: 1.0 } (bottom center)
-// Only override here if the stem is significantly off-center
-export const STEM_BASE_OVERRIDES: Record<string, { x: number; y: number }> = {
-  'february_leaf_right_side.svg': { x: 0.71, y: 1.0 },
+export type CharmShapeConfig = {
+  bindingPointX: number;
+  bindingPointY: number;
+  scaleX: number;
+  scaleY: number;
 };
 
-// SVG output settings
+export const CHARM_SHAPE_CONFIG: Record<CharmShape, CharmShapeConfig> = {
+  coin: {
+    bindingPointX: 0.5,
+    bindingPointY: 0.8,
+    scaleX: 0.9,
+    scaleY: 0.9,
+  },
+  round: {
+    bindingPointX: 0.5,
+    bindingPointY: 0.8,
+    scaleX: 1.1,
+    scaleY: 1.8,
+  },
+  oval: {
+    bindingPointX: 0.5,
+    bindingPointY: 0.8,
+    scaleX: 1,
+    scaleY: 1,
+  },
+  heart: {
+    bindingPointX: 0.5,
+    bindingPointY: 0.8,
+    scaleX: 1,
+    scaleY: 1,
+  },
+};
+
 export const SVG_CONFIG = {
   viewBoxWidth: 400,
   viewBoxHeight: 400,
