@@ -232,8 +232,8 @@ export function resolveCollisions(
     if (!myPoly) continue;
     let iter = 0;
     let leftAngle = 0;
-    while (iter < 20) {
-      const myPts = getTransformedPoly(i, 2)!;
+    while (iter < 30 * (centerIndex - i)) {
+      const myPts = getTransformedPoly(i)!;
       const refPts = getTransformedPoly(i + 1)!;
 
       if (polygonsCollide(myPts, refPts)) {
@@ -256,7 +256,7 @@ export function resolveCollisions(
   for (let i = centerIndex + 1; i < flowers.length; i++) {
     let iter = 0;
     let rightAngle = 0;
-    while (iter < 20) {
+    while (iter < 30 * (i - centerIndex)) {
       const myPts = getTransformedPoly(i)!;
       const refPts = getTransformedPoly(i - 1)!;
 
@@ -286,7 +286,7 @@ function transformFlower(
     ? ` scale(${scaleW.toFixed(4)}, ${scaleH.toFixed(4)})`
     : '';
   return `
-    <g id="flower-${index}" 
+    <g id="flower-${index}"
        transform="rotate(${rotation.toFixed(2)}, ${bindingPoint.x}, ${bindingPoint.y}) translate(${position.x.toFixed(2)}, ${position.y.toFixed(2)})${scaleAttr}">
       ${flower.content}
     </g>`;
@@ -298,7 +298,6 @@ function transformFlower(
   //   </g>`;
 }
 
-/** Transform a local-space point through the flower's slot transform to world space */
 function localToWorld(
   localPt: Point,
   slot: FlowerSlot,
@@ -350,6 +349,22 @@ export function balanceFlowerAngles(
   return { ...layout, slots };
 }
 
+function buildPolyOverlay(
+  flower: FlowerSVG,
+  slot: FlowerSlot,
+  bindingPoint: Point,
+  index: number,
+): string {
+  const pts = getTransformedPolygonPoints(flower, slot, bindingPoint);
+  if (!pts) return '';
+  const colors = ['red', 'blue', 'green', 'orange', 'purple'];
+  const color = colors[index % colors.length];
+  const points = pts
+    .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+    .join(' ');
+  return `<polygon id="poly-${index}" points="${points}" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="1" pointer-events="none"/>`;
+}
+
 export function composeBouquet(
   layout: LayoutTemplate,
   flowers: Array<FlowerSVG | null>,
@@ -365,6 +380,16 @@ export function composeBouquet(
         : '',
     )
     .join('\n');
+
+  const polyOverlays = flowers
+    .map((flower, index) =>
+      flower
+        ? buildPolyOverlay(flower, layout.slots[index], bindingPoint, index)
+        : '',
+    )
+    .filter(Boolean)
+    .join('\n');
+  // const polyOverlays = '';
 
   const cx = viewBox.width / 2;
   const cy = viewBox.height / 2;
@@ -383,7 +408,9 @@ export function composeBouquet(
     <g id="flowers">
     ${flowersContent}
     </g>
- 
+    <g id="debug-polys">
+    ${polyOverlays}
+    </g>
   </g>
 </svg>`;
 }

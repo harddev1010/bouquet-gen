@@ -19,8 +19,8 @@ export const LAYOUT_ANGLES: Record<number, number[]> = {
   1: [0],
   2: [-12, 12],
   3: [-15, 0, 15],
-  4: [-20, -8, 8, 20],
-  5: [-25, -12, 0, 12, 25],
+  4: [-18, -8, 8, 18],
+  5: [-18, -8, 0, 8, 18],
 };
 
 export const LAYOUT_SCALE: Record<number, { w: number; h: number }[]> = {
@@ -41,11 +41,11 @@ export const LAYOUT_SCALE: Record<number, { w: number; h: number }[]> = {
     { w: 0.8, h: 0.8 },
   ],
   5: [
-    { w: 0.85, h: 0.85 },
-    { w: 0.93, h: 0.93 },
+    { w: 0.8, h: 0.8 },
+    { w: 0.92, h: 0.92 },
     { w: 1.0, h: 1.0 },
-    { w: 0.93, h: 0.93 },
-    { w: 0.85, h: 0.85 },
+    { w: 0.92, h: 0.92 },
+    { w: 0.8, h: 0.8 },
   ],
 };
 
