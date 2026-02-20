@@ -8,6 +8,7 @@ import {
   composeBouquet,
   checkAssetsExist,
   resolveCollisions,
+  balanceFlowerAngles,
 } from './svg-utils';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -57,7 +58,14 @@ export async function generateBouquet(
     flowerSVGs,
     layout.bindingPoint,
   );
-  const svg = composeBouquet(resolvedLayout, flowerSVGs, charmShape as CharmShape);
+
+  const balancedLayout = balanceFlowerAngles(resolvedLayout, flowerSVGs);
+
+  const svg = composeBouquet(
+    balancedLayout,
+    flowerSVGs,
+    charmShape as CharmShape,
+  );
 
   ensureOutputDir();
   const filename = generateFilename(flowers);

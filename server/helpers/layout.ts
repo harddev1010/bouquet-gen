@@ -2,20 +2,41 @@ import type { CharmShape } from '@shared/schema';
 import type { FlowerSlot, FlowerSVG, LayoutTemplate, Point } from './types';
 import {
   LAYOUT_ANGLES,
+  LAYOUT_SCALE,
   SVG_CONFIG,
   SPREAD_MULTIPLIER,
   CHARM_SHAPE_CONFIG,
 } from './constants';
 
+type FlowerPosition =
+  | 'left'
+  | 'center_left'
+  | 'center'
+  | 'center_right'
+  | 'right';
+
 export function getFlowerPosition(
   slotIndex: number,
   totalSlots: number,
-): 'left' | 'center' | 'right' {
-  if (totalSlots === 1) return 'center';
-  const centerIndex = (totalSlots - 1) / 2;
-  if (slotIndex < centerIndex) return 'left';
-  if (slotIndex > centerIndex) return 'right';
-  return 'center';
+): FlowerPosition {
+  switch (totalSlots) {
+    case 1:
+      return 'center';
+    case 2:
+      return ['left', 'right'][slotIndex] as FlowerPosition;
+    case 3:
+      return ['left', 'center', 'right'][slotIndex] as FlowerPosition;
+    case 4:
+      return ['left', 'center_left', 'center_right', 'right'][
+        slotIndex
+      ] as FlowerPosition;
+    case 5:
+      return ['left', 'center_left', 'center', 'center_right', 'right'][
+        slotIndex
+      ] as FlowerPosition;
+    default:
+      throw new Error(`Invalid total slots: ${totalSlots}`);
+  }
 }
 
 export function generateLayout(
@@ -32,20 +53,25 @@ export function generateLayout(
 
   const flowerCount = flowers.length;
   const baseAngles = LAYOUT_ANGLES[flowerCount] || LAYOUT_ANGLES[3];
+  const baseScales = LAYOUT_SCALE[flowerCount] || LAYOUT_SCALE[3];
   const spreadMult = SPREAD_MULTIPLIER[charmShape] || 1.0;
 
   const slots: FlowerSlot[] = baseAngles.map((baseAngle, index) => {
     const flower = flowers[index];
+    const { w: scaleW, h: scaleH } = baseScales[index] ?? { w: 1.0, h: 1.0 };
     let angle = baseAngle * spreadMult + (flower?.baseRotation ?? 0);
+
+    const scaledW = (flower?.width ?? 0) * scaleW;
+    const scaledH = (flower?.height ?? 0) * scaleH;
 
     const transformCenter = flower?.transformCenter
       ? {
-          x: flower.transformCenter.x * flower.width,
-          y: flower.transformCenter.y * flower.height,
+          x: flower.transformCenter.x * scaledW,
+          y: flower.transformCenter.y * scaledH,
         }
       : {
-          x: (flower?.width ?? 0) / 2,
-          y: (flower?.height ?? 0) * 0.75,
+          x: scaledW / 2,
+          y: scaledH * 0.75,
         };
 
     return {
@@ -54,6 +80,8 @@ export function generateLayout(
         y: bindingPoint.y - transformCenter.y,
       },
       rotation: angle,
+      scaleW,
+      scaleH,
     };
   });
 

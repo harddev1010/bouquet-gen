@@ -14,7 +14,6 @@ December
 
 
 
-
 Februari,Maart,Februari
 Februari,Oktober,November
 Januari,Mei,Juni
@@ -23,18 +22,18 @@ Maart,November,Augustus
 Mei,Oktober
 September,Juni,Februari
 April,Oktober,November
-
-
-
--- Fricky ones, collision overrotating --
 Februari,April,Januari,November
-December,Januari,December,Maart
-Februari,April,Juni,Oktober
+
 Januari,Februari,September,November
 November,Oktober,April,September
-
-
--- Fricky ones, collision underrotating --
 Juli,Februari,September
 Februari,April,Januari,Juli
+
+December,Januari,December,Maart
+Februari,April,Juni,Oktober
 April,September,Februari,Maart
+
+
+April,Augustus,November,Maart,Augustus
+Mei,December,Juni,Oktober
+September,Maart,Februari,Maart,November

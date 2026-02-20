@@ -49,6 +49,15 @@
       .point-viewport .svg-wrapper {
         flex-shrink: 0;
       }
+      .draw-polygon-mode #svgWrapper svg {
+        cursor: crosshair;
+      }
+      .flower-polygon-overlay {
+        fill: rgba(156, 39, 176, 0.2);
+        stroke: #9c27b0;
+        stroke-width: 2;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -67,9 +76,40 @@
           <select id="position" class="form-select" disabled>
             <option value="">Loading...</option>
             <option value="left">Left</option>
+            <option value="center_left">Center Left</option>
             <option value="center">Center</option>
+            <option value="center_right">Center Right</option>
             <option value="right">Right</option>
           </select>
+        </div>
+      </div>
+
+      <div class="card mb-3 d-none" id="polygonToolbarCard">
+        <div
+          class="card-header bg-white d-flex align-items-center flex-wrap justify-content-between gap-2"
+        >
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              id="drawPolygonBtn"
+            >
+              Draw polygon
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm d-none"
+              id="finishPolygonBtn"
+            >
+              Finish polygon
+            </button>
+          </div>
+          <div
+            class="p-2 bg-primary bg-opacity-10 rounded border border-primary border-opacity-25 text-end fw-monospace small d-none"
+            id="polygonDisplay"
+          >
+            <div id="polygonText">[{x, y}, ...]</div>
+          </div>
         </div>
       </div>
 
@@ -77,7 +117,7 @@
         <div
           class="card-header bg-white d-flex align-items-center flex-wrap justify-content-between gap-2"
         >
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
             <label class="mb-0">
               <span class="me-1">Rotation:</span>
               <input
@@ -125,6 +165,7 @@
           </div>
         </div>
       </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -144,6 +185,11 @@
       let currentMonth = null;
       let currentPosition = null;
       let lastClickedPoint = null;
+      let currentSvgForRect = null;
+      let currentVbForRect = null;
+      let drawPolygonMode = false;
+      let polygonPoints = [];
+      let polygonOverlay = null;
 
       const metricsStore = {};
 
@@ -154,9 +200,77 @@
       function saveMetrics() {
         if (!currentMonth || !currentPosition) return;
         const key = getMetricsKey();
-        const pctX = lastClickedPoint?.pctX ?? 0;
-        const pctY = lastClickedPoint?.pctY ?? 0;
-        metricsStore[key] = { pctX, pctY, rotation: currentRotation };
+        const stored = metricsStore[key] ?? {};
+        const pctX = lastClickedPoint?.pctX ?? stored.pctX ?? 0;
+        const pctY = lastClickedPoint?.pctY ?? stored.pctY ?? 0;
+        const flowerPolygon = stored.flowerPolygon;
+        metricsStore[key] = {
+          pctX,
+          pctY,
+          rotation: currentRotation,
+          flowerPolygon,
+        };
+      }
+
+      function saveFlowerPolygon(points) {
+        if (!currentMonth || !currentPosition) return;
+        const key = getMetricsKey();
+        const stored = metricsStore[key] ?? {};
+        const poly = points?.length >= 3 ? points : null;
+        metricsStore[key] = {
+          pctX: stored.pctX ?? 0,
+          pctY: stored.pctY ?? 0,
+          rotation: currentRotation,
+          flowerPolygon: poly,
+        };
+        updatePolygonDisplay(poly);
+        const svgEl = document.querySelector('#svgMount svg');
+        if (svgEl && currentVbForRect)
+          renderPolygonOverlay(svgEl, poly, currentVbForRect);
+      }
+
+      function updatePolygonDisplay(points) {
+        const container = document.getElementById('polygonDisplay');
+        const el = document.getElementById('polygonText');
+        if (!container || !el) return;
+        if (!points || points.length < 3) {
+          container.classList.add('d-none');
+          return;
+        }
+        container.classList.remove('d-none');
+        const arrStr = points
+          .map((p) => `{x: ${p.x.toFixed(3)}, y: ${p.y.toFixed(3)}}`)
+          .join(', ');
+        const copyStr = `[${points.map((p) => `{x: ${p.x.toFixed(3)}, y: ${p.y.toFixed(3)}}`).join(', ')}]`;
+        el.innerHTML = `[${arrStr}] — <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="copyPolygonBtn">Copy</button>`;
+        document
+          .getElementById('copyPolygonBtn')
+          ?.addEventListener('click', () => {
+            navigator.clipboard.writeText(copyStr);
+          });
+      }
+
+      function renderPolygonOverlay(svgEl, points, vb) {
+        if (!svgEl || !points || points.length < 2) {
+          if (polygonOverlay) {
+            polygonOverlay.remove();
+            polygonOverlay = null;
+          }
+          return;
+        }
+        const pts = points
+          .map((p) => `${vb.x + p.x * vb.w},${vb.y + p.y * vb.h}`)
+          .join(' ');
+        if (polygonOverlay) polygonOverlay.remove();
+        const tag = points.length >= 3 ? 'polygon' : 'polyline';
+        polygonOverlay = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          tag,
+        );
+        polygonOverlay.setAttribute('points', pts);
+        polygonOverlay.setAttribute('class', 'flower-polygon-overlay');
+        polygonOverlay.setAttribute('pointer-events', 'none');
+        svgEl.appendChild(polygonOverlay);
       }
 
       function calculateBaseRotation(centerPct, stemTipPct = { x: 0.5, y: 1 }) {
@@ -171,7 +285,13 @@
         if (!res.ok) throw new Error('Failed to load flower list');
         flowerData = await res.json();
         for (const month of flowerData.months) {
-          for (const position of flowerData.positions) {
+          for (const position of [
+            'left',
+            'center_left',
+            'center',
+            'center_right',
+            'right',
+          ]) {
             const info = flowerData.flowers[month]?.[position];
             if (info) {
               const key = `${month}-${position}`;
@@ -179,6 +299,8 @@
                 pctX: info.transformCenter.x,
                 pctY: info.transformCenter.y,
                 rotation: info.baseRotation,
+                flowerPolygon:
+                  info.flowerPoly?.length >= 3 ? info.flowerPoly : null,
               };
             }
           }
@@ -196,10 +318,15 @@
         }
         monthSelect.disabled = false;
 
-        positionSelect.innerHTML =
-          '<option value="left">Left</option>' +
-          '<option value="center">Center</option>' +
-          '<option value="right">Right</option>';
+        positionSelect.innerHTML = [
+          'left',
+          'center_left',
+          'center',
+          'center_right',
+          'right',
+        ]
+          .map((p) => `<option value="${p}">${p}</option>`)
+          .join('');
         positionSelect.disabled = false;
       }
 
@@ -264,6 +391,20 @@
 
       function setupClickHandler(svgEl, origHeight, vb) {
         svgEl.addEventListener('click', (e) => {
+          if (drawPolygonMode) {
+            const pt = svgEl.createSVGPoint();
+            pt.x = e.clientX;
+            pt.y = e.clientY;
+            const svgPt = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+            const pctX = Math.round(((svgPt.x - vb.x) / vb.w) * 1000) / 1000;
+            const pctY = Math.round(((svgPt.y - vb.y) / vb.h) * 1000) / 1000;
+            polygonPoints.push({ x: pctX, y: pctY });
+            renderPolygonOverlay(svgEl, polygonPoints, vb);
+            document
+              .getElementById('finishPolygonBtn')
+              ?.classList.remove('d-none');
+            return;
+          }
           const pt = svgEl.createSVGPoint();
           pt.x = e.clientX;
           pt.y = e.clientY;
@@ -317,6 +458,38 @@
       function updateRotationDisplay() {
         const el = document.getElementById('rotationValue');
         if (el) el.textContent = currentRotation.toFixed(1);
+      }
+
+      function initDrawHandlers() {
+        const wrapper = document.getElementById('svgWrapper');
+        const polygonBtn = document.getElementById('drawPolygonBtn');
+        const finishPolygonBtn = document.getElementById('finishPolygonBtn');
+        polygonBtn?.addEventListener('click', () => {
+          drawPolygonMode = !drawPolygonMode;
+          polygonBtn.classList.toggle('active', drawPolygonMode);
+          wrapper?.classList.toggle('draw-polygon-mode', drawPolygonMode);
+          if (drawPolygonMode) {
+            polygonPoints = [];
+            finishPolygonBtn?.classList.remove('d-none');
+          } else {
+            polygonPoints = [];
+            polygonOverlay?.remove();
+            polygonOverlay = null;
+            finishPolygonBtn?.classList.add('d-none');
+            saveFlowerPolygon([]);
+          }
+        });
+
+        finishPolygonBtn?.addEventListener('click', () => {
+          if (polygonPoints.length >= 3) {
+            saveFlowerPolygon([...polygonPoints]);
+            drawPolygonMode = false;
+            polygonBtn?.classList.remove('active');
+            wrapper?.classList.remove('draw-polygon-mode');
+            finishPolygonBtn?.classList.add('d-none');
+          }
+          polygonPoints = [];
+        });
       }
 
       function setupRotateHandlers(mount, scale) {
@@ -464,6 +637,19 @@
 
           setupClickHandler(svgEl, vb.h, vb);
 
+          currentSvgForRect = svgEl;
+          currentVbForRect = vb;
+          if (stored?.flowerPolygon?.length >= 3) {
+            renderPolygonOverlay(svgEl, stored.flowerPolygon, vb);
+            updatePolygonDisplay(stored.flowerPolygon);
+          } else {
+            updatePolygonDisplay(null);
+            if (polygonOverlay) {
+              polygonOverlay.remove();
+              polygonOverlay = null;
+            }
+          }
+
           const doc2 = parser.parseFromString(svgText, 'image/svg+xml');
           const svgEl2 = doc2.querySelector('svg');
 
@@ -490,6 +676,16 @@
 
           viewerContent.classList.remove('d-none');
           document.getElementById('coordsDisplay').classList.remove('d-none');
+          document
+            .getElementById('polygonToolbarCard')
+            ?.classList.remove('d-none');
+
+          drawPolygonMode = true;
+          document.getElementById('drawPolygonBtn')?.classList.add('active');
+          wrapper?.classList.add('draw-polygon-mode');
+          document
+            .getElementById('finishPolygonBtn')
+            ?.classList.remove('d-none');
 
           setupRotateHandlers(mountRotate, scale);
         } catch (err) {
@@ -497,6 +693,9 @@
           errorMsg.style.display = 'block';
           viewerContent.classList.add('d-none');
           document.getElementById('coordsDisplay').classList.add('d-none');
+          document
+            .getElementById('polygonToolbarCard')
+            ?.classList.add('d-none');
         }
       }
 
@@ -515,6 +714,7 @@
         try {
           await loadFlowerList();
           initSelects();
+          initDrawHandlers();
           document.getElementById('month').addEventListener('change', () => {
             document.getElementById('position').value = 'left';
             onSelectChange();
@@ -525,9 +725,11 @@
 
           const firstMonth = flowerData.months[0];
           if (firstMonth) {
-            document.getElementById('month').value = firstMonth;
+            const monthEl = document.getElementById('month');
+            const willFireChange = monthEl.value !== firstMonth;
+            monthEl.value = firstMonth;
             document.getElementById('position').value = 'left';
-            onSelectChange();
+            if (!willFireChange) onSelectChange();
           }
         } catch (err) {
           document.getElementById('month').innerHTML =

@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "dev:watch": "nodemon --watch server --ext ts,tsx,json --exec tsx server/index.ts",
+    "dev:watch": "nodemon --watch server --ext ts,tsx --exec tsx server/index.ts",
     "build": "tsx script/build.ts",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc"

@@ -9,6 +9,25 @@ import {
 import { checkAssetsExist } from './helpers/svg-utils';
 import { FLOWER_FILES } from './helpers/constants';
 
+/** Resolve position config: if it has base, merge base config with overrides */
+function resolveFlowerPosition(
+  positions: Record<string, { path?: string; base?: string; transformCenter?: { x: number; y: number }; baseRotation?: number; flowerPoly?: { x: number; y: number }[] }>,
+  position: string,
+) {
+  const posConfig = positions[position];
+  const resolved = posConfig?.base
+    ? { ...positions[posConfig.base], ...posConfig }
+    : { ...(posConfig ?? {}) };
+  return resolved.path
+    ? {
+        path: resolved.path,
+        transformCenter: resolved.transformCenter ?? { x: 0.5, y: 0.8 },
+        baseRotation: resolved.baseRotation ?? 0,
+        flowerPoly: resolved.flowerPoly ?? [],
+      }
+    : null;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express,
@@ -92,42 +111,28 @@ export async function registerRoutes(
   });
 
   app.get('/api/flowers', (_req: Request, res: Response) => {
-    const flowers: Record<
-      string,
-      {
-        left: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
-        center: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
-        right: { path: string; transformCenter: { x: number; y: number }; baseRotation: number };
-      }
-    > = {};
+    const positionKeys = Object.keys(
+      Object.values(FLOWER_FILES)[0] ?? {},
+    ) as string[];
+    const flowers: Record<string, Record<string, { path: string; transformCenter: { x: number; y: number }; baseRotation: number; flowerPoly: { x: number; y: number }[] }>> = {};
     const pathsSet = new Set<string>();
 
     for (const [month, positions] of Object.entries(FLOWER_FILES)) {
-      flowers[month] = {
-        left: {
-          path: positions.left.path,
-          transformCenter: positions.left.transformCenter,
-          baseRotation: positions.left.baseRotation,
-        },
-        center: {
-          path: positions.center.path,
-          transformCenter: positions.center.transformCenter,
-          baseRotation: positions.center.baseRotation,
-        },
-        right: {
-          path: positions.right.path,
-          transformCenter: positions.right.transformCenter,
-          baseRotation: positions.right.baseRotation,
-        },
-      };
-      pathsSet.add(positions.left.path).add(positions.center.path).add(positions.right.path);
+      flowers[month] = {};
+      for (const pos of positionKeys) {
+        const resolved = resolveFlowerPosition(positions, pos);
+        if (resolved) {
+          flowers[month][pos] = resolved;
+          pathsSet.add(resolved.path);
+        }
+      }
     }
 
     return res.json({
       flowers,
-      paths: [...pathsSet].sort(),
+      paths: Array.from(pathsSet).sort(),
       months: Object.keys(FLOWER_FILES),
-      positions: ['left', 'center', 'right'] as const,
+      positions: positionKeys,
     });
   });
 

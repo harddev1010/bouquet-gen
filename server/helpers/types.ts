@@ -6,6 +6,8 @@ export interface Point {
 export interface FlowerSlot {
   position: Point;
   rotation: number;
+  scaleW: number;
+  scaleH: number;
 }
 
 export interface LayoutTemplate {
@@ -15,10 +17,8 @@ export interface LayoutTemplate {
   viewBox: { width: number; height: number };
 }
 
-export interface FlowerRegion {
-  yMinPct: number;
-  yMaxPct: number;
-}
+/** Normalized polygon (0-1) for flower head collision region */
+export type FlowerPoly = Point[];
 
 export interface FlowerSVG {
   content: string;
@@ -26,5 +26,5 @@ export interface FlowerSVG {
   height: number;
   transformCenter?: Point;
   baseRotation?: number;
-  flowerRegion?: FlowerRegion;
+  flowerPoly?: FlowerPoly;
 }
