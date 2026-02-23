@@ -381,15 +381,15 @@ export function composeBouquet(
     )
     .join('\n');
 
-  const polyOverlays = flowers
-    .map((flower, index) =>
-      flower
-        ? buildPolyOverlay(flower, layout.slots[index], bindingPoint, index)
-        : '',
-    )
-    .filter(Boolean)
-    .join('\n');
-  // const polyOverlays = '';
+  // const polyOverlays = flowers
+  //   .map((flower, index) =>
+  //     flower
+  //       ? buildPolyOverlay(flower, layout.slots[index], bindingPoint, index)
+  //       : '',
+  //   )
+  //   .filter(Boolean)
+  //   .join('\n');
+  const polyOverlays = '';
 
   const cx = viewBox.width / 2;
   const cy = viewBox.height / 2;

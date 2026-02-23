@@ -27,6 +27,7 @@ Februari,April,Januari,November
 Januari,Februari,September,November
 November,Oktober,April,September
 Juli,Februari,September
+Februari,Maart,April,Juni,December
 Februari,April,Januari,Juli
 
 December,Januari,December,Maart
@@ -37,3 +38,6 @@ April,September,Februari,Maart
 April,Augustus,November,Maart,Augustus
 Mei,December,Juni,Oktober
 September,Maart,Februari,Maart,November
+April,Mei,Augustus,Oktober,December
+April,Januari,Februari,Januari,December
+September,Maart,November,Oktober,Juni
