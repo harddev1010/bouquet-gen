@@ -6,6 +6,9 @@ type FlowerAsset = {
   transformCenter?: Point;
   baseRotation?: number;
   flowerPoly?: Point[];
+  /** Per-flower scale to normalize size (default 1). Use for flowers that appear too large or too small. */
+  scaleX?: number;
+  scaleY?: number;
 };
 
 export const FLOWER_FILES: Record<
@@ -181,6 +184,8 @@ export const FLOWER_FILES: Record<
       path: 'february_left.svg',
       transformCenter: { x: 0.933, y: 0.779 },
       baseRotation: 17.0,
+      scaleX: 0.8,
+      scaleY: 0.9,
       flowerPoly: [
         { x: 0.8, y: 0.47 },
         { x: 0.775, y: 0.406 },
@@ -815,7 +820,7 @@ export const FLOWER_FILES: Record<
         { x: 0.704, y: 0.528 },
       ],
     },
-    center: { base: 'center_left', baseRotation: -17.5 },
+    center: { base: 'center_right', baseRotation: 20 },
     center_right: {
       base: 'center_right',
       path: 'may_center_right.svg',
@@ -1522,7 +1527,7 @@ export const FLOWER_FILES: Record<
         { x: 0.699, y: 0.662 },
       ],
     },
-    center: { base: 'center_left', baseRotation: -7.0 },
+    center: { base: 'center_right', baseRotation: 7.0 },
     center_right: {
       base: 'center_right',
       path: 'october_right.svg',

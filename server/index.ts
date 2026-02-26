@@ -26,10 +26,7 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static('public'));
-app.use(
-  '/flowers',
-  express.static(path.join(__dirname, '../assets/flowers')),
-);
+app.use('/flowers', express.static(path.join(__dirname, '../assets/flowers')));
 
 export function log(message: string, source = 'express') {
   const formattedTime = new Date().toLocaleTimeString('en-US', {
@@ -82,8 +79,8 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  const port = parseInt(process.env.PORT || '8000', 10);
-  app.listen(8000, () => {
+  const port = parseInt(process.env.PORT || '8080', 10);
+  app.listen(8080, () => {
     log(`Server running on port ${port}`);
   });
 })();

@@ -20,14 +20,17 @@ function removeBackgroundPath(svgContent: string): string {
   return svgContent.replace(/<g>\s*<path[^>]*Z"\s*\/?>\s*<\/g>/i, '');
 }
 
-function convertToStrokeOnly(content: string): string {
+function convertToStrokeOnly(
+  content: string,
+  strokeWidth: number = SVG_CONFIG.strokeWidth,
+): string {
   let result = content;
 
   result = result.replace(/fill="[^"]*"/g, 'fill="none"');
   result = result.replace(/fill:[^;"]*/g, 'fill:none');
   result = result.replace(/<path([^>]*)>/g, (match, attrs) => {
     if (attrs.includes('stroke=')) return match;
-    const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${SVG_CONFIG.strokeWidth}"`;
+    const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${strokeWidth}"`;
     const cleanAttrs = attrs.replace(/\s*\/\s*$/g, '');
     return `<path${cleanAttrs}${strokeAttr} />`;
   });
@@ -35,6 +38,12 @@ function convertToStrokeOnly(content: string): string {
   result = result.replace(
     /stroke="none"/g,
     `stroke="${SVG_CONFIG.strokeColor}"`,
+  );
+
+  // Normalize all stroke-width to a uniform value (source SVGs have varying widths: 2, 2.83, 6, 7.21, etc.)
+  result = result.replace(
+    /stroke-width="[^"]*"/g,
+    `stroke-width="${strokeWidth}"`,
   );
 
   return result;
@@ -72,10 +81,14 @@ function parseSVG(svgContent: string): FlowerSVG {
     content = svgMatch ? svgMatch[1] : '';
   }
 
-  content = convertToStrokeOnly(content);
-
   const scaleFactor = BASE_FLOWER_HEIGHT / origHeight;
   const normalizedWidth = origWidth * scaleFactor;
+
+  // Compensate stroke width by scaleFactor so all flowers have same effective stroke after scaling
+  // (flower SVGs have different orig heights: 367–2200, so scaleFactor varies; without this, strokes look thicker on smaller SVGs)
+  const compensatedStrokeWidth =
+    SVG_CONFIG.strokeWidth / scaleFactor;
+  content = convertToStrokeOnly(content, compensatedStrokeWidth);
 
   content = `<g transform="scale(${scaleFactor.toFixed(6)})">${content}</g>`;
 
@@ -121,6 +134,15 @@ export function loadFlowerSVG(
     parsed.transformCenter = svgInfo.transformCenter;
     parsed.baseRotation = svgInfo.baseRotation;
     parsed.flowerPoly = svgInfo.flowerPoly ?? [];
+
+    // Apply per-flower scale (default 1) to normalize size across flowers
+    const scaleX = svgInfo.scaleX ?? 1;
+    const scaleY = svgInfo.scaleY ?? 1;
+    if (scaleX !== 1 || scaleY !== 1) {
+      parsed.content = `<g transform="scale(${scaleX}, ${scaleY})">${parsed.content}</g>`;
+      parsed.width *= scaleX;
+      parsed.height *= scaleY;
+    }
 
     return parsed;
   } catch (error) {
