@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { getDirname } from './path-utils';
 import type { CharmShape } from '@shared/schema';
 import type { FlowerSVG, FlowerSlot, LayoutTemplate, Point } from './types';
 
@@ -12,8 +12,7 @@ import {
   CHARM_SHAPE_CONFIG,
 } from './constants';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = getDirname(typeof import.meta !== 'undefined' ? import.meta.url : undefined);
 const ASSETS_PATH = path.join(__dirname, '../../assets/flowers');
 
 function removeBackgroundPath(svgContent: string): string {

@@ -1,8 +1,7 @@
 import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { getDirname } from './path-utils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = getDirname(typeof import.meta !== 'undefined' ? import.meta.url : undefined);
 
 /** A4 dimensions in PDF points (72 pt = 1 inch, 25.4 mm = 1 inch) */
 export const A4_WIDTH_PT = 595.28;
