@@ -16,7 +16,7 @@ import {
   readGenerationHistory,
 } from "./helpers/generation-history";
 import { getOrderOutputDir } from "./helpers/order-output";
-import { isGmailConfigured, sendOrderPosterPdfsEmail } from "./helpers/gmail";
+import { isEmailConfigured, sendOrderPosterPdfsEmail } from "./helpers/gmail";
 import { getProjectRoot } from "./helpers/path-utils";
 
 /** Resolve position config: if it has base, merge base config with overrides */
@@ -240,9 +240,9 @@ export async function registerRoutes(
 
       if (!emailTo) {
         emailSkippedReason = "No customer email on order";
-      } else if (!isGmailConfigured()) {
+      } else if (!isEmailConfigured()) {
         emailSkippedReason =
-          "Gmail SMTP not configured (GMAIL_USER, GMAIL_APP_PASSWORD)";
+          "Email not configured (Google Script relay or Resend)";
       } else {
         try {
           await sendOrderPosterPdfsEmail({

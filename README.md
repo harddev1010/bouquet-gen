@@ -13,6 +13,36 @@ Generates SVG bouquets from Dutch birth month flowers. Each bouquet is composed 
 npm install
 ```
 
+### Email
+
+Order PDF emails can be sent using either:
+
+- **Google Apps Script relay** (recommended when you do not have a domain)
+- **Resend API** (recommended when you have a verified sender/domain)
+
+#### Option A: Google Apps Script relay
+
+Required environment variables:
+
+- `GSCRIPT_MAIL_WEBHOOK_URL` — deployed web app URL from Google Apps Script
+- `GSCRIPT_MAIL_SECRET` — shared secret expected by your script
+
+Optional:
+
+- `MAIL_FROM_NAME` — display sender name used by the script (default: `MamaLoves`)
+- `MAIL_REPLY_TO` — reply-to email address
+
+#### Option B: Resend API
+
+Required environment variables:
+
+- `RESEND_API_KEY` — Resend API key
+- `MAIL_FROM` — sender email (must be a verified Resend sender/domain), e.g. `MamaLoves <noreply@yourdomain.com>` or `noreply@yourdomain.com`
+
+#### Common optional variable
+
+- `TEST_FORCE_RECEIVER` — override recipient for testing only
+
 ## Running
 
 ### Development (with auto-reload)
