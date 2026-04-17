@@ -69,7 +69,9 @@ export async function registerRoutes(
     if (!normalizedPath.startsWith(normalizedRoot)) {
       return undefined;
     }
-    const relative = normalizedPath.slice(normalizedRoot.length).replace(/^\/+/, "");
+    const relative = normalizedPath
+      .slice(normalizedRoot.length)
+      .replace(/^\/+/, "");
     return `/${relative}`;
   };
 
@@ -117,7 +119,11 @@ export async function registerRoutes(
       const orderDir = getOrderOutputDir(orderId);
       fs.mkdirSync(orderDir, { recursive: true });
 
-      const orderDataPath = path.join(getProjectRoot(), "order_data", `${orderId}_${Date.now()}.json`);
+      const orderDataPath = path.join(
+        getProjectRoot(),
+        "order_data",
+        `${orderId}_${Date.now()}.json`,
+      );
       fs.mkdirSync(path.dirname(orderDataPath), { recursive: true });
       fs.writeFileSync(
         orderDataPath,
@@ -127,11 +133,11 @@ export async function registerRoutes(
 
       const forcedReceiver = process.env.TEST_FORCE_RECEIVER?.trim();
       const customerEmail =
-        forcedReceiver ||
         (typeof orderData.email === "string" && orderData.email.trim()) ||
         (typeof orderData.contact_email === "string" &&
           orderData.contact_email.trim()) ||
         "";
+      const emailTo = forcedReceiver || customerEmail;
       const orderTitle =
         typeof orderData.name === "string" && orderData.name.trim()
           ? orderData.name.trim()
@@ -232,7 +238,7 @@ export async function registerRoutes(
       let emailSkippedReason: string | undefined;
       let emailError: string | undefined;
 
-      if (!customerEmail) {
+      if (!emailTo) {
         emailSkippedReason = "No customer email on order";
       } else if (!isGmailConfigured()) {
         emailSkippedReason =
@@ -240,7 +246,7 @@ export async function registerRoutes(
       } else {
         try {
           await sendOrderPosterPdfsEmail({
-            to: customerEmail,
+            to: emailTo,
             orderLabel,
             attachments: pdfAttachments,
           });
@@ -351,7 +357,8 @@ export async function registerRoutes(
         if (entry.at > row.time) {
           row.time = entry.at;
         }
-        if (!row.orderTitle && entry.orderTitle) row.orderTitle = entry.orderTitle;
+        if (!row.orderTitle && entry.orderTitle)
+          row.orderTitle = entry.orderTitle;
         if (!row.customerEmail && entry.customerEmail) {
           row.customerEmail = entry.customerEmail;
         }
