@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Order History</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="p-4">
+    <div class="container">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Order History</h1>
+        <button id="refreshBtn" class="btn btn-primary btn-sm">Refresh</button>
+      </div>
+
+      <div id="status" class="mb-3 text-muted">Loading history...</div>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Order Title</th>
+              <th>Customer Email</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const historyBody = document.getElementById("historyBody");
+      const refreshBtn = document.getElementById("refreshBtn");
+
+      function formatTime(iso) {
+        if (!iso) return "-";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        return d.toLocaleString();
+      }
+
+      function displayText(value, fallback = "-") {
+        return value && String(value).trim() ? String(value).trim() : fallback;
+      }
+
+      function actionLink(text, href, className, downloadName) {
+        if (!href) return '<span class="text-muted">-</span>';
+        const downloadAttr = downloadName ? ` download="${downloadName}"` : "";
+        return `<a class="${className}" href="${href}" target="_blank" rel="noopener noreferrer"${downloadAttr}>${text}</a>`;
+      }
+
+      function renderRows(rows) {
+        historyBody.innerHTML = "";
+        if (!rows.length) {
+          historyBody.innerHTML =
+            '<tr><td colspan="4" class="text-muted">No history entries yet.</td></tr>';
+          return;
+        }
+
+        for (const row of rows) {
+          const tr = document.createElement("tr");
+          const orderLabel = row.orderTitle || row.lineItemTitle || `Order ${row.orderId}`;
+          const posterAction = actionLink(
+            "Download Poster",
+            row.posterUrl,
+            "btn btn-sm btn-outline-primary me-2",
+            row.posterUrl ? row.posterUrl.split("/").pop() : "",
+          );
+          const svgAction = actionLink(
+            "Preview SVG",
+            row.svgUrl,
+            "btn btn-sm btn-outline-secondary",
+          );
+          tr.innerHTML = `
+            <td>${formatTime(row.time)}</td>
+            <td>${displayText(orderLabel)}</td>
+            <td>${displayText(row.customerEmail)}</td>
+            <td>${posterAction}${svgAction}</td>
+          `;
+          historyBody.appendChild(tr);
+        }
+      }
+
+      async function loadHistory() {
+        statusEl.textContent = "Loading history...";
+        try {
+          const res = await fetch("/api/order-history", {
+            headers: { Accept: "application/json" },
+          });
+          if (!res.ok) {
+            throw new Error(`Server error ${res.status}`);
+          }
+          const payload = await res.json();
+          const rows = Array.isArray(payload.rows) ? payload.rows : [];
+          renderRows(rows);
+          statusEl.textContent = `${rows.length} row(s) loaded`;
+        } catch (err) {
+          historyBody.innerHTML =
+            '<tr><td colspan="4" class="text-danger">Failed to load history.</td></tr>';
+          statusEl.textContent = `Error: ${err?.message || err}`;
+        }
+      }
+
+      refreshBtn.addEventListener("click", loadHistory);
+      loadHistory();
+    </script>
+  </body>
+</html>

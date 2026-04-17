@@ -2,7 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getProjectRoot } from './path-utils';
 import type { GenerateBouquetRequest, CharmShape } from '@shared/schema';
-import { POSTER_TITLE_PROP, POSTER_NAMES_PROP } from './constants';
+import {
+  POSTER_TITLE_PROP,
+  POSTER_NAMES_PROP,
+  LOCALE_MONTH_TO_KEY,
+  MONTH_TO_FLOWER,
+  BACK_TEXT_PROPERTY_NAMES,
+} from './constants';
 import { generateLayout, getFlowerPosition } from './layout';
 import {
   loadFlowerSVG,
@@ -81,6 +87,44 @@ export async function generateBouquet(
   return { filename, path: filepath, svg };
 }
 
+const FRONT_FLOWER_NAME_PATTERNS = [
+  /^Voorkant geboortebloem (\d)$/,
+  /^Vorderseite Geburtsblume (\d)$/,
+];
+
+const TITLE_PROPERTY_NAMES = [
+  POSTER_TITLE_PROP,
+  'Poster title',
+  'Poster titel',
+  'Titel',
+  'Title',
+];
+
+const NAMES_PROPERTY_NAMES = [
+  POSTER_NAMES_PROP,
+  'Naam',
+  'Namen',
+  'Name',
+  'Names',
+];
+
+function normalizeMonthToFlowerKey(label: string): string {
+  const t = label.trim();
+  const direct =
+    LOCALE_MONTH_TO_KEY[t] ??
+    MONTH_TO_FLOWER[t as keyof typeof MONTH_TO_FLOWER];
+  if (direct) return direct;
+  const tl = t.toLowerCase();
+  const merged = { ...LOCALE_MONTH_TO_KEY, ...MONTH_TO_FLOWER } as Record<
+    string,
+    string
+  >;
+  for (const [k, v] of Object.entries(merged)) {
+    if (k.toLowerCase() === tl) return v;
+  }
+  return t;
+}
+
 export function extractFlowersFromLineItem(lineItem: any): string[] | null {
   if (!lineItem.properties || !Array.isArray(lineItem.properties)) {
     return null;
@@ -89,20 +133,34 @@ export function extractFlowersFromLineItem(lineItem: any): string[] | null {
   const flowers: string[] = [];
 
   for (const prop of lineItem.properties) {
-    const match = prop.name?.match(/Voorkant geboortebloem (\d)/);
-    if (match && prop.value) {
-      const index = parseInt(match[1]) - 1;
-      flowers[index] = prop.value;
+    if (!prop?.name || !prop.value) continue;
+    for (const re of FRONT_FLOWER_NAME_PATTERNS) {
+      const match = prop.name.match(re);
+      if (match) {
+        const index = parseInt(match[1], 10) - 1;
+        flowers[index] = normalizeMonthToFlowerKey(String(prop.value));
+        break;
+      }
     }
   }
 
-  return flowers.filter(Boolean).length > 0 ? flowers.filter(Boolean) : null;
+  const ordered = flowers.filter(Boolean);
+  return ordered.length > 0 ? ordered : null;
 }
 
 export function extractTextFromLineItem(lineItem: {
   properties?: Array<{ name: string; value: string }>;
+  title?: string;
 }): { title?: string; names?: string } {
   const result: { title?: string; names?: string } = {};
+
+  function normalizeKey(input: string): string {
+    return input
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
 
   function getProp(
     props: Array<{ name: string; value: string }> | undefined,
@@ -113,9 +171,55 @@ export function extractTextFromLineItem(lineItem: {
     return p?.value?.trim() || undefined;
   }
 
+  function getFirstMatchingProp(
+    props: Array<{ name: string; value: string }> | undefined,
+    names: string[],
+  ): string | undefined {
+    if (!props || props.length === 0) return undefined;
+    for (const name of names) {
+      const exact = getProp(props, name);
+      if (exact) return exact;
+    }
+
+    const normalizedNames = new Set(names.map(normalizeKey));
+    for (const prop of props) {
+      if (!prop?.name || !prop.value) continue;
+      const key = normalizeKey(prop.name);
+      if (normalizedNames.has(key)) {
+        const value = String(prop.value).trim();
+        if (value) return value;
+      }
+    }
+    return undefined;
+  }
+
+  function deriveTitleFromLineItemTitle(title: string | undefined): string | undefined {
+    if (!title) return undefined;
+    const clean = title.trim();
+    if (!clean) return undefined;
+    const segments = clean
+      .split(' - ')
+      .map((segment) => segment.trim())
+      .filter(Boolean);
+    return segments[0] || clean;
+  }
+
   if (lineItem.properties?.length) {
-    result.title = getProp(lineItem.properties, POSTER_TITLE_PROP);
-    result.names = getProp(lineItem.properties, POSTER_NAMES_PROP);
+    result.title = getFirstMatchingProp(lineItem.properties, TITLE_PROPERTY_NAMES);
+    result.names = getFirstMatchingProp(lineItem.properties, NAMES_PROPERTY_NAMES);
+    if (!result.names) {
+      for (const name of BACK_TEXT_PROPERTY_NAMES) {
+        const v = getProp(lineItem.properties, name);
+        if (v) {
+          result.names = v;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!result.title) {
+    result.title = deriveTitleFromLineItemTitle(lineItem.title);
   }
 
   return result;
@@ -123,9 +227,23 @@ export function extractTextFromLineItem(lineItem: {
 
 export function extractTextFromOrder(orderData: {
   note_attributes?: Array<{ name: string; value: string }>;
-  line_items?: Array<{ properties?: Array<{ name: string; value: string }> }>;
+  line_items?: Array<{
+    properties?: Array<{ name: string; value: string }>;
+    title?: string;
+  }>;
+  shipping_address?: { name?: string | null };
+  billing_address?: { name?: string | null };
+  customer?: { first_name?: string | null; last_name?: string | null };
 }): { title?: string; names?: string } {
   const result: { title?: string; names?: string } = {};
+
+  function normalizeKey(input: string): string {
+    return input
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
 
   function getProp(
     props: Array<{ name: string; value: string }> | undefined,
@@ -136,17 +254,57 @@ export function extractTextFromOrder(orderData: {
     return p?.value?.trim() || undefined;
   }
 
-  if (orderData.note_attributes?.length) {
-    result.title = getProp(orderData.note_attributes, POSTER_TITLE_PROP);
-    result.names = getProp(orderData.note_attributes, POSTER_NAMES_PROP);
+  function getFirstMatchingProp(
+    props: Array<{ name: string; value: string }> | undefined,
+    names: string[],
+  ): string | undefined {
+    if (!props || props.length === 0) return undefined;
+    for (const name of names) {
+      const exact = getProp(props, name);
+      if (exact) return exact;
+    }
+
+    const normalizedNames = new Set(names.map(normalizeKey));
+    for (const prop of props) {
+      if (!prop?.name || !prop.value) continue;
+      const key = normalizeKey(prop.name);
+      if (normalizedNames.has(key)) {
+        const value = String(prop.value).trim();
+        if (value) return value;
+      }
+    }
+    return undefined;
   }
 
-  if (result.title === undefined && result.names === undefined) {
-    const firstItem = orderData.line_items?.[0];
-    if (firstItem?.properties?.length) {
-      result.title = getProp(firstItem.properties, POSTER_TITLE_PROP);
-      result.names = getProp(firstItem.properties, POSTER_NAMES_PROP);
+  function getCustomerName(): string | undefined {
+    const shippingName = orderData.shipping_address?.name?.trim();
+    if (shippingName) return shippingName;
+
+    const billingName = orderData.billing_address?.name?.trim();
+    if (billingName) return billingName;
+
+    const firstName = orderData.customer?.first_name?.trim() ?? '';
+    const lastName = orderData.customer?.last_name?.trim() ?? '';
+    const combined = `${firstName} ${lastName}`.trim();
+    return combined || undefined;
+  }
+
+  if (orderData.note_attributes?.length) {
+    result.title = getFirstMatchingProp(orderData.note_attributes, TITLE_PROPERTY_NAMES);
+    result.names = getFirstMatchingProp(orderData.note_attributes, NAMES_PROPERTY_NAMES);
+  }
+
+  if (orderData.line_items?.length) {
+    for (const item of orderData.line_items) {
+      if (result.title && result.names) break;
+      const fromLine = extractTextFromLineItem(item);
+      if (!result.title && fromLine.title) result.title = fromLine.title;
+      if (!result.names && fromLine.names) result.names = fromLine.names;
     }
+  }
+
+  if (!result.names) {
+    result.names = getCustomerName();
   }
 
   return result;

@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
-    "dev:watch": "nodemon --watch server --ext ts,tsx --exec tsx server/index.ts",
+    "dev:watch": "cross-env NODE_ENV=development nodemon --watch server --watch shared --ext ts,tsx --exec \"tsx server/index.ts\"",
     "build": "tsx script/build.ts",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc"
@@ -13,7 +13,9 @@
   "dependencies": {
     "@fontsource/crimson-text": "^5.2.7",
     "@fontsource/source-sans-3": "^5.2.9",
+    "dotenv": "^17.4.2",
     "express": "^5.0.1",
+    "nodemailer": "^8.0.5",
     "pdfkit": "^0.17.2",
     "svg-to-pdfkit": "^0.1.8",
     "zod": "^3.24.2"
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/node": "20.19.27",
+    "@types/nodemailer": "^8.0.0",
     "@types/pdfkit": "^0.17.5",
     "cross-env": "^10.1.0",
     "esbuild": "^0.25.0",

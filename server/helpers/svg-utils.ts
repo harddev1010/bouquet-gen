@@ -58,6 +58,26 @@ function convertToStrokeOnly(content: string): string {
   return result;
 }
 
+function stripEditorNamespaces(content: string): string {
+  let sanitized = content;
+  // Remove editor-specific namespaced elements and attributes that can make the final SVG invalid
+  // when their namespace declarations are not present in the composed output.
+  sanitized = sanitized.replace(
+    /<(?:sodipodi|inkscape):[^>]*>([\s\S]*?)<\/(?:sodipodi|inkscape):[^>]*>/gi,
+    '',
+  );
+  sanitized = sanitized.replace(
+    /<(?:sodipodi|inkscape):[^>]*\/>/gi,
+    '',
+  );
+  sanitized = sanitized.replace(
+    /\s(?:sodipodi|inkscape):[a-zA-Z0-9_.-]+="[^"]*"/g,
+    '',
+  );
+  sanitized = sanitized.replace(/\sxmlns:(?:sodipodi|inkscape)="[^"]*"/g, '');
+  return sanitized;
+}
+
 function parseSVG(svgContent: string): FlowerSVG {
   let origWidth = 100,
     origHeight = 100;
@@ -80,6 +100,7 @@ function parseSVG(svgContent: string): FlowerSVG {
   }
 
   svgContent = removeBackgroundPath(svgContent);
+  svgContent = stripEditorNamespaces(svgContent);
 
   let content: string;
   const gMatch = svgContent.match(/<g[^>]*>([\s\S]*)<\/g>/i);
@@ -108,7 +129,8 @@ export function loadFlowerSVG(
   month: string,
   position: 'left' | 'center' | 'right' | 'center_left' | 'center_right',
 ): FlowerSVG | null {
-  const flowerName = MONTH_TO_FLOWER[month];
+  // Accept either storefront labels (e.g. "Februari") or internal keys (e.g. "february")
+  const flowerName = MONTH_TO_FLOWER[month] ?? month.toLowerCase();
   if (!flowerName) {
     console.error(`Unknown month: ${month}`);
     return null;

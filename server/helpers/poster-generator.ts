@@ -45,6 +45,12 @@ function ensureOutputDir(): void {
   }
 }
 
+function ensureDir(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
 function fontExists(fontPath: string): boolean {
   try {
     return fs.existsSync(fontPath);
@@ -64,13 +70,21 @@ function drawLogo(
 ): void {
   if (!fs.existsSync(logoPath)) return;
   try {
-    const img = doc.openImage(logoPath);
+    // pdfkit typings omit openImage on PDFDocument; runtime supports it
+    const img = (doc as unknown as { openImage: (p: string) => unknown }).openImage(
+      logoPath,
+    ) as { height: number; width: number };
     const offsetPt = mmToPt(LOGO_OFFSET_MM);
     const logoWidth = 80; // pt — adjust if needed
     const logoHeight = (img.height / img.width) * logoWidth;
     const x = A4_WIDTH_PT - offsetPt - logoWidth;
     const y = A4_HEIGHT_PT - offsetPt - logoHeight;
-    doc.image(img, x, y, { width: logoWidth });
+    (doc as InstanceType<typeof PDFDocument> & { image: (src: unknown, ...args: unknown[]) => void }).image(
+      img,
+      x,
+      y,
+      { width: logoWidth },
+    );
   } catch {
     // Logo missing or invalid — skip silently
   }
@@ -113,6 +127,8 @@ export async function generatePoster(
     flowers?: string[];
     orderId?: string;
     lineItemId?: string;
+    /** When set, PDF is written here instead of generated_pdf/ */
+    outputDir?: string;
   },
 ): Promise<GeneratePosterResult> {
   const { svg, title, names } = input;
@@ -128,13 +144,14 @@ export async function generatePoster(
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => {
       const buffer = Buffer.concat(chunks);
-      ensureOutputDir();
+      const outDir = options?.outputDir ?? OUTPUT_DIR;
+      ensureDir(outDir);
       const filename = generateFilename(
         options?.flowers,
         options?.orderId,
         options?.lineItemId,
       );
-      const filepath = path.join(OUTPUT_DIR, filename);
+      const filepath = path.join(outDir, filename);
       fs.writeFileSync(filepath, buffer);
       resolve({ filename, path: filepath, buffer });
     });

@@ -15,6 +15,36 @@ export const MONTH_TO_FLOWER: Record<string, string> = {
   December: 'december',
 };
 
+/** Shopify line-item month labels (NL storefront, DE storefront, EN) → FLOWER_FILES keys */
+export const LOCALE_MONTH_TO_KEY: Record<string, string> = {
+  ...MONTH_TO_FLOWER,
+  Januar: 'january',
+  Februar: 'february',
+  März: 'march',
+  Mai: 'may',
+  Juni: 'june',
+  Juli: 'july',
+  August: 'august',
+  September: 'september',
+  Oktober: 'october',
+  November: 'november',
+  Dezember: 'december',
+  January: 'january',
+  February: 'february',
+  March: 'march',
+  May: 'may',
+  June: 'june',
+  July: 'july',
+  October: 'october',
+  December: 'december',
+};
+
+/** Back-engraving / personalization text on charm — used on PDF as `names` when poster fields absent */
+export const BACK_TEXT_PROPERTY_NAMES = [
+  'Achterkant persoonlijke tekst',
+  'Rückseite personalisierter Text',
+] as const;
+
 export const LAYOUT_ANGLES: Record<number, number[]> = {
   1: [0],
   2: [-15, 15],

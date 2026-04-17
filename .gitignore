@@ -5,3 +5,7 @@ dist
 test.txt
 generated_svg
 generated_pdf
+generated_orders
+data
+order_data
+.env
