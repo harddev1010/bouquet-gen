@@ -8,6 +8,8 @@ import {
   LOCALE_MONTH_TO_KEY,
   MONTH_TO_FLOWER,
   BACK_TEXT_PROPERTY_NAMES,
+  POSTER_LINE_STROKE,
+  SVG_CONFIG,
 } from './constants';
 import { generateLayout, getFlowerPosition } from './layout';
 import {
@@ -49,8 +51,10 @@ export async function generateBouquet(
   const positions = flowers.map((_, index) =>
     getFlowerPosition(index, flowers.length),
   );
+  const strokeWidth =
+    charmShape === 'poster' ? POSTER_LINE_STROKE : SVG_CONFIG.strokeWidth;
   const flowerSVGs = flowers.map((month, index) =>
-    loadFlowerSVG(month, positions[index]),
+    loadFlowerSVG(month, positions[index], strokeWidth),
   );
 
   const loadedCount = flowerSVGs.filter((f) => f !== null).length;

@@ -22,8 +22,10 @@ import {
   FONT_TITLE,
   FONT_NAMES,
   LOGO_PATH,
-  LOGO_OFFSET_MM,
+  LOGO_BOTTOM_MARGIN_MM,
+  LOGO_SIDE_MARGIN_MM,
 } from './poster-constants';
+import { tintLogoToMamaGrayPng } from './logo-tint';
 
 const OUTPUT_DIR = path.join(getProjectRoot(), 'generated_pdf');
 
@@ -70,15 +72,18 @@ function drawLogo(
 ): void {
   if (!fs.existsSync(logoPath)) return;
   try {
+    const tinted = tintLogoToMamaGrayPng(logoPath);
+    const imageSrc = tinted ?? logoPath;
     // pdfkit typings omit openImage on PDFDocument; runtime supports it
-    const img = (doc as unknown as { openImage: (p: string) => unknown }).openImage(
-      logoPath,
+    const img = (doc as unknown as { openImage: (p: string | Buffer) => unknown }).openImage(
+      imageSrc,
     ) as { height: number; width: number };
-    const offsetPt = mmToPt(LOGO_OFFSET_MM);
-    const logoWidth = 80; // pt — adjust if needed
+    const sideInsetPt = mmToPt(LOGO_SIDE_MARGIN_MM);
+    const bottomInsetPt = mmToPt(LOGO_BOTTOM_MARGIN_MM);
+    const logoWidth = Math.max(1, A4_WIDTH_PT - 2 * sideInsetPt);
     const logoHeight = (img.height / img.width) * logoWidth;
-    const x = A4_WIDTH_PT - offsetPt - logoWidth;
-    const y = A4_HEIGHT_PT - offsetPt - logoHeight;
+    const x = (A4_WIDTH_PT - logoWidth) / 2;
+    const y = A4_HEIGHT_PT - bottomInsetPt - logoHeight;
     (doc as InstanceType<typeof PDFDocument> & { image: (src: unknown, ...args: unknown[]) => void }).image(
       img,
       x,

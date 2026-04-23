@@ -46,9 +46,12 @@ export const FONT_NAMES = path.join(
   'assets/fonts/PlayfairDisplay-Regular.ttf',
 );
 
-/** MamaLoves logo — 20mm from right and bottom of page. Place file in assets/logo/. */
+/** MamaLoves logo — centered, #b4b4b4, margins per print spec. Place file in assets/logo/. */
 export const LOGO_PATH = path.join(
   getProjectRoot(),
   'assets/logo/MAMALOVES_Logo_Liggend.png',
 );
-export const LOGO_OFFSET_MM = 20; // mm from right and bottom edges
+/** Distance from page bottom to logo bottom edge (mm). */
+export const LOGO_BOTTOM_MARGIN_MM = 21;
+/** Horizontal inset from left and right page edges; logo spans remaining width (mm). */
+export const LOGO_SIDE_MARGIN_MM = 91;

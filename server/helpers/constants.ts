@@ -88,6 +88,9 @@ export const SVG_CONFIG = {
   strokeWidth: 0.8,
 };
 
+/** Bouquet outline width when generating poster PDFs (SVG user units before layout scale). */
+export const POSTER_LINE_STROKE = 1.75;
+
 export const SPREAD_MULTIPLIER: Record<CharmShape, number> = {
   coin: 1.0,
   round: 1.0,

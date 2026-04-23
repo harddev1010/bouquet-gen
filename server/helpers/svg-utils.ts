@@ -10,6 +10,7 @@ import {
   SVG_CONFIG,
   BASE_FLOWER_HEIGHT,
   CHARM_SHAPE_CONFIG,
+  POSTER_LINE_STROKE,
 } from './constants';
 
 const ASSETS_PATH = path.join(getProjectRoot(), 'assets/flowers');
@@ -21,7 +22,7 @@ function removeBackgroundPath(svgContent: string): string {
   return svgContent.replace(/<g>\s*<path[^>]*Z"\s*\/?>\s*<\/g>/i, '');
 }
 
-function convertToStrokeOnly(content: string): string {
+function convertToStrokeOnly(content: string, normalizedStrokeWidth: number): string {
   let result = content;
 
   result = result.replace(/fill="[^"]*"/g, 'fill="none"');
@@ -38,7 +39,7 @@ function convertToStrokeOnly(content: string): string {
 
   result = result.replace(/<path([^>]*)>/g, (match, attrs) => {
     if (attrs.includes('stroke=')) return match;
-    const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${SVG_CONFIG.strokeWidth}"`;
+    const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${normalizedStrokeWidth}"`;
     const cleanAttrs = attrs.replace(/\s*\/\s*$/g, '');
     return `<path${cleanAttrs}${strokeAttr} />`;
   });
@@ -52,7 +53,7 @@ function convertToStrokeOnly(content: string): string {
   // (parseSVG scale, per-flower scaleX/Y, layout scaleW/H)
   result = result.replace(
     /stroke-width="[^"]*"/g,
-    `stroke-width="${SVG_CONFIG.strokeWidth}" vector-effect="non-scaling-stroke"`,
+    `stroke-width="${normalizedStrokeWidth}" vector-effect="non-scaling-stroke"`,
   );
 
   return result;
@@ -78,7 +79,10 @@ function stripEditorNamespaces(content: string): string {
   return sanitized;
 }
 
-function parseSVG(svgContent: string): FlowerSVG {
+function parseSVG(
+  svgContent: string,
+  normalizedStrokeWidth: number = SVG_CONFIG.strokeWidth,
+): FlowerSVG {
   let origWidth = 100,
     origHeight = 100;
 
@@ -114,7 +118,7 @@ function parseSVG(svgContent: string): FlowerSVG {
   const scaleFactor = BASE_FLOWER_HEIGHT / origHeight;
   const normalizedWidth = origWidth * scaleFactor;
 
-  content = convertToStrokeOnly(content);
+  content = convertToStrokeOnly(content, normalizedStrokeWidth);
 
   content = `<g transform="scale(${scaleFactor.toFixed(6)})">${content}</g>`;
 
@@ -128,6 +132,7 @@ function parseSVG(svgContent: string): FlowerSVG {
 export function loadFlowerSVG(
   month: string,
   position: 'left' | 'center' | 'right' | 'center_left' | 'center_right',
+  normalizedStrokeWidth: number = SVG_CONFIG.strokeWidth,
 ): FlowerSVG | null {
   // Accept either storefront labels (e.g. "Februari") or internal keys (e.g. "february")
   const flowerName = MONTH_TO_FLOWER[month] ?? month.toLowerCase();
@@ -156,7 +161,7 @@ export function loadFlowerSVG(
 
   try {
     const content = fs.readFileSync(filePath, 'utf8');
-    const parsed = parseSVG(content);
+    const parsed = parseSVG(content, normalizedStrokeWidth);
 
     parsed.transformCenter = svgInfo.transformCenter;
     parsed.baseRotation = svgInfo.baseRotation;
@@ -328,16 +333,70 @@ function transformFlower(
   slot: FlowerSlot,
   bindingPoint: Point,
   index: number,
+  charmShape: CharmShape,
 ): string {
   const { rotation, position, scaleW, scaleH } = slot;
-  const needsScale = scaleW !== 1 || scaleH !== 1;
+  let content = flower.content;
+  let scaleWUse = scaleW;
+  let scaleHUse = scaleH;
+
+  if (charmShape === 'poster') {
+    const uniform = Math.max(Math.min(scaleW, scaleH), 0.001);
+    scaleWUse = uniform;
+    scaleHUse = uniform;
+    // Compensate for all scale layers that affect stroke rendering in poster mode:
+    // - slot scale (uniform)
+    // - intrinsic SVG scale wrappers (normalization + per-flower scale)
+    const scaleRegex = /transform="scale\(([^)]+)\)"/g;
+    let intrinsicStrokeScale = 1;
+    for (const match of content.matchAll(scaleRegex)) {
+      const raw = match[1].split(',').map((v) => parseFloat(v.trim()));
+      if (!raw.length || !Number.isFinite(raw[0])) continue;
+      const sx = raw[0];
+      const sy = Number.isFinite(raw[1]) ? raw[1] : sx;
+      intrinsicStrokeScale *= Math.sqrt(Math.abs(sx * sy));
+    }
+    intrinsicStrokeScale = Math.max(intrinsicStrokeScale, 0.001);
+
+    const strokeUser = POSTER_LINE_STROKE / (uniform * intrinsicStrokeScale);
+    const strokeUserText = strokeUser.toFixed(4);
+    // Poster output is print-focused: force a uniform stroke width and round caps/joins
+    // across source SVGs that may carry different stroke defaults and authoring styles.
+    content = content
+      .replace(
+        /stroke-width="[^"]*"(?:\s+vector-effect="non-scaling-stroke")?/g,
+        `stroke-width="${strokeUserText}"`,
+      )
+      .replace(/stroke-linecap="[^"]*"/g, 'stroke-linecap="round"')
+      .replace(/stroke-linejoin="[^"]*"/g, 'stroke-linejoin="round"');
+
+    content = content.replace(
+      /<(path|circle|ellipse|line|polyline|polygon|rect)\b([^>]*)>/g,
+      (match, tagName: string, attrs: string) => {
+        if (!/\sstroke="[^"]*"/.test(attrs)) return match;
+        let nextAttrs = attrs;
+        if (!/\sstroke-width="[^"]*"/.test(nextAttrs)) {
+          nextAttrs += ` stroke-width="${strokeUserText}"`;
+        }
+        if (!/\sstroke-linecap="[^"]*"/.test(nextAttrs)) {
+          nextAttrs += ' stroke-linecap="round"';
+        }
+        if (!/\sstroke-linejoin="[^"]*"/.test(nextAttrs)) {
+          nextAttrs += ' stroke-linejoin="round"';
+        }
+        return `<${tagName}${nextAttrs}>`;
+      },
+    );
+  }
+
+  const needsScale = scaleWUse !== 1 || scaleHUse !== 1;
   const scaleAttr = needsScale
-    ? ` scale(${scaleW.toFixed(4)}, ${scaleH.toFixed(4)})`
+    ? ` scale(${scaleWUse.toFixed(4)}, ${scaleHUse.toFixed(4)})`
     : '';
   return `
     <g id="flower-${index}"
        transform="rotate(${rotation.toFixed(2)}, ${bindingPoint.x}, ${bindingPoint.y}) translate(${position.x.toFixed(2)}, ${position.y.toFixed(2)})${scaleAttr}">
-      ${flower.content}
+      ${content}
     </g>`;
   // return `
   //   <g id="flower-${index}"
@@ -426,13 +485,18 @@ export function composeBouquet(
   charmShape: CharmShape,
 ): string {
   const { viewBox, bindingPoint } = layout;
-  console.log(viewBox, bindingPoint);
   const config = CHARM_SHAPE_CONFIG[charmShape] ?? CHARM_SHAPE_CONFIG.coin;
 
   const flowersContent = flowers
     .map((flower, index) =>
       flower
-        ? transformFlower(flower, layout.slots[index], bindingPoint, index)
+        ? transformFlower(
+            flower,
+            layout.slots[index],
+            bindingPoint,
+            index,
+            charmShape,
+          )
         : '',
     )
     .join('\n');
@@ -467,7 +531,7 @@ export function composeBouquet(
   //     : '';
   const viewBoxRect = '';
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  let out = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
      viewBox="${vbX} ${vbY} ${vbW} ${vbH}"
      width="${viewBox.width}px" height="${viewBox.height}px">
@@ -481,4 +545,10 @@ export function composeBouquet(
     </g>
   </g>
 </svg>`;
+
+  if (charmShape === 'poster') {
+    out = out.replace(/\s+vector-effect="non-scaling-stroke"/g, '');
+  }
+
+  return out;
 }
