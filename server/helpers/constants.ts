@@ -1,48 +1,48 @@
-import type { CharmShape } from '@shared/schema';
+import type { CharmShape } from "@shared/schema";
 
 export const MONTH_TO_FLOWER: Record<string, string> = {
-  Januari: 'january',
-  Februari: 'february',
-  Maart: 'march',
-  April: 'april',
-  Mei: 'may',
-  Juni: 'june',
-  Juli: 'july',
-  Augustus: 'august',
-  September: 'september',
-  Oktober: 'october',
-  November: 'november',
-  December: 'december',
+  Januari: "january",
+  Februari: "february",
+  Maart: "march",
+  April: "april",
+  Mei: "may",
+  Juni: "june",
+  Juli: "july",
+  Augustus: "august",
+  September: "september",
+  Oktober: "october",
+  November: "november",
+  December: "december",
 };
 
 /** Shopify line-item month labels (NL storefront, DE storefront, EN) → FLOWER_FILES keys */
 export const LOCALE_MONTH_TO_KEY: Record<string, string> = {
   ...MONTH_TO_FLOWER,
-  Januar: 'january',
-  Februar: 'february',
-  März: 'march',
-  Mai: 'may',
-  Juni: 'june',
-  Juli: 'july',
-  August: 'august',
-  September: 'september',
-  Oktober: 'october',
-  November: 'november',
-  Dezember: 'december',
-  January: 'january',
-  February: 'february',
-  March: 'march',
-  May: 'may',
-  June: 'june',
-  July: 'july',
-  October: 'october',
-  December: 'december',
+  Januar: "january",
+  Februar: "february",
+  März: "march",
+  Mai: "may",
+  Juni: "june",
+  Juli: "july",
+  August: "august",
+  September: "september",
+  Oktober: "october",
+  November: "november",
+  Dezember: "december",
+  January: "january",
+  February: "february",
+  March: "march",
+  May: "may",
+  June: "june",
+  July: "july",
+  October: "october",
+  December: "december",
 };
 
 /** Back-engraving / personalization text on charm — used on PDF as `names` when poster fields absent */
 export const BACK_TEXT_PROPERTY_NAMES = [
-  'Achterkant persoonlijke tekst',
-  'Rückseite personalisierter Text',
+  "Achterkant persoonlijke tekst",
+  "Rückseite personalisierter Text",
 ] as const;
 
 export const LAYOUT_ANGLES: Record<number, number[]> = {
@@ -84,12 +84,12 @@ export const BASE_FLOWER_HEIGHT = 200;
 export const SVG_CONFIG = {
   viewBoxWidth: 400,
   viewBoxHeight: 400,
-  strokeColor: '#000000',
+  strokeColor: "#000000",
   strokeWidth: 0.8,
 };
 
 /** Bouquet outline width when generating poster PDFs (SVG user units before layout scale). */
-export const POSTER_LINE_STROKE = 1.75;
+export const POSTER_LINE_STROKE = 1.25;
 
 export const SPREAD_MULTIPLIER: Record<CharmShape, number> = {
   coin: 1.0,
@@ -141,8 +141,8 @@ export const CHARM_SHAPE_CONFIG: Record<CharmShape, CharmShapeConfig> = {
   },
 };
 
-export { FLOWER_FILES } from './flower_constants';
+export { FLOWER_FILES } from "./flower_constants";
 
 /** Shopify checkout property names for poster text (configurable) */
-export const POSTER_TITLE_PROP = 'Poster titel';
-export const POSTER_NAMES_PROP = 'Namen';
+export const POSTER_TITLE_PROP = "Poster titel";
+export const POSTER_NAMES_PROP = "Namen";

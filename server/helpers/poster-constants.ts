@@ -1,5 +1,5 @@
-import * as path from 'path';
-import { getProjectRoot } from './path-utils';
+import * as path from "path";
+import { getProjectRoot } from "./path-utils";
 
 /** A4 dimensions in PDF points (72 pt = 1 inch, 25.4 mm = 1 inch) */
 export const A4_WIDTH_PT = 595.28;
@@ -33,25 +33,25 @@ export const NAMES_CHARACTER_SPACING = 5;
 export const SECTION_SPACING_PT = 24;
 
 /** Page background color */
-export const PDF_BACKGROUND_COLOR = '#fffaf5';
+export const PDF_BACKGROUND_COLOR = "#fffaf5";
 
 /** Font paths - General Sans Bold (title), IvyPresto Display (names).
  *  Place font files in assets/fonts/. Falls back to Helvetica if missing. */
 export const FONT_TITLE = path.join(
   getProjectRoot(),
-  'assets/fonts/GeneralSans-Bold.ttf',
+  "assets/fonts/GeneralSans-Bold.ttf",
 );
 export const FONT_NAMES = path.join(
   getProjectRoot(),
-  'assets/fonts/PlayfairDisplay-Regular.ttf',
+  "assets/fonts/PlayfairDisplay-Regular.ttf",
 );
 
 /** MamaLoves logo — centered, #b4b4b4, margins per print spec. Place file in assets/logo/. */
 export const LOGO_PATH = path.join(
   getProjectRoot(),
-  'assets/logo/MAMALOVES_Logo_Liggend.png',
+  "assets/logo/MAMALOVES_Logo_Liggend.png",
 );
 /** Distance from page bottom to logo bottom edge (mm). */
 export const LOGO_BOTTOM_MARGIN_MM = 21;
 /** Horizontal inset from left and right page edges; logo spans remaining width (mm). */
-export const LOGO_SIDE_MARGIN_MM = 91;
+export const LOGO_SIDE_MARGIN_MM = 96;
