@@ -11,7 +11,11 @@ import {
   POSTER_LINE_STROKE,
   SVG_CONFIG,
 } from './constants';
-import { generateLayout, getFlowerPosition } from './layout';
+import {
+  applyDuplicateMonthAsymmetry,
+  generateLayout,
+  getFlowerPosition,
+} from './layout';
 import {
   loadFlowerSVG,
   composeBouquet,
@@ -62,7 +66,9 @@ export async function generateBouquet(
     throw new Error('Failed to load any flower SVGs');
   }
 
-  const layout = generateLayout(flowerSVGs, charmShape as CharmShape);
+  const flowerKeys = flowers.map((m) => normalizeMonthToFlowerKey(String(m)));
+  let layout = generateLayout(flowerSVGs, charmShape as CharmShape);
+  layout = applyDuplicateMonthAsymmetry(layout, flowerSVGs, flowerKeys);
   const resolvedLayout = resolveCollisions(
     layout,
     flowerSVGs,

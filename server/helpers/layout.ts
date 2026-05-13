@@ -92,3 +92,77 @@ export function generateLayout(
     viewBox: { width: viewBoxWidth, height: viewBoxHeight },
   };
 }
+
+/** Recompute translate so the binding point stays aligned after `scaleW` / `scaleH` / slot changes. */
+export function recalcSlotPositions(
+  layout: LayoutTemplate,
+  flowers: Array<FlowerSVG | null>,
+): LayoutTemplate {
+  const { bindingPoint } = layout;
+  const slots = layout.slots.map((slot, index) => {
+    const flower = flowers[index];
+    if (!flower) return { ...slot };
+    const scaledW = flower.width * slot.scaleW;
+    const scaledH = flower.height * slot.scaleH;
+    const transformCenter = flower.transformCenter
+      ? {
+          x: flower.transformCenter.x * scaledW,
+          y: flower.transformCenter.y * scaledH,
+        }
+      : {
+          x: scaledW / 2,
+          y: scaledH * 0.75,
+        };
+    return {
+      ...slot,
+      position: {
+        x: bindingPoint.x - transformCenter.x,
+        y: bindingPoint.y - transformCenter.y,
+      },
+    };
+  });
+  return { ...layout, slots };
+}
+
+const DUPLICATE_EXTRA_SCALE = 0.94;
+const DUPLICATE_ROTATION_NUDGE = 6;
+
+/**
+ * When the same birth month appears more than once, avoid a perfectly mirrored pair:
+ * slightly scale down later instances and nudge rotation outward (product feedback).
+ */
+export function applyDuplicateMonthAsymmetry(
+  layout: LayoutTemplate,
+  flowers: Array<FlowerSVG | null>,
+  flowerKeys: string[],
+): LayoutTemplate {
+  const n = flowerKeys.length;
+  if (n < 2) return layout;
+
+  const groups = new Map<string, number[]>();
+  for (let i = 0; i < flowerKeys.length; i++) {
+    const key = flowerKeys[i]?.toLowerCase() ?? '';
+    if (!flowers[i] || !key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(i);
+  }
+
+  const slots = layout.slots.map((s) => ({ ...s }));
+  const center = (n - 1) / 2;
+
+  for (const indices of Array.from(groups.values())) {
+    if (indices.length < 2) continue;
+    indices.sort((a: number, b: number) => a - b);
+    for (let k = 1; k < indices.length; k++) {
+      const i = indices[k];
+      const flower = flowers[i];
+      if (!flower) continue;
+      slots[i].scaleW *= DUPLICATE_EXTRA_SCALE;
+      slots[i].scaleH *= DUPLICATE_EXTRA_SCALE;
+      const outward = i <= center ? -DUPLICATE_ROTATION_NUDGE : DUPLICATE_ROTATION_NUDGE;
+      slots[i].rotation += outward;
+    }
+  }
+
+  return recalcSlotPositions({ ...layout, slots }, flowers);
+}

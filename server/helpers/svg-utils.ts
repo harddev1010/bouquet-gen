@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { getProjectRoot } from './path-utils';
-import type { CharmShape } from '@shared/schema';
-import type { FlowerSVG, FlowerSlot, LayoutTemplate, Point } from './types';
+import * as fs from "fs";
+import * as path from "path";
+import { getProjectRoot } from "./path-utils";
+import type { CharmShape } from "@shared/schema";
+import type { FlowerSVG, FlowerSlot, LayoutTemplate, Point } from "./types";
 
 import {
   FLOWER_FILES,
@@ -11,36 +11,39 @@ import {
   BASE_FLOWER_HEIGHT,
   CHARM_SHAPE_CONFIG,
   POSTER_LINE_STROKE,
-} from './constants';
+} from "./constants";
 
-const ASSETS_PATH = path.join(getProjectRoot(), 'assets/flowers');
+const ASSETS_PATH = path.join(getProjectRoot(), "assets/flowers");
 export function getFlowersAssetsPath(): string {
   return ASSETS_PATH;
 }
 
 function removeBackgroundPath(svgContent: string): string {
-  return svgContent.replace(/<g>\s*<path[^>]*Z"\s*\/?>\s*<\/g>/i, '');
+  return svgContent.replace(/<g>\s*<path[^>]*Z"\s*\/?>\s*<\/g>/i, "");
 }
 
-function convertToStrokeOnly(content: string, normalizedStrokeWidth: number): string {
+function convertToStrokeOnly(
+  content: string,
+  normalizedStrokeWidth: number,
+): string {
   let result = content;
 
   result = result.replace(/fill="[^"]*"/g, 'fill="none"');
-  result = result.replace(/fill:[^;"]*/g, 'fill:none');
+  result = result.replace(/fill:[^;"]*/g, "fill:none");
   // Remove inline stroke-width from style so normalized stroke-width attribute can take effect.
   result = result.replace(/style="([^"]*)"/g, (_match, styleBody: string) => {
     const cleaned = styleBody
-      .replace(/(^|;)\s*stroke-width\s*:\s*[^;"]*/gi, '$1')
-      .replace(/;;+/g, ';')
-      .replace(/^;|;$/g, '')
+      .replace(/(^|;)\s*stroke-width\s*:\s*[^;"]*/gi, "$1")
+      .replace(/;;+/g, ";")
+      .replace(/^;|;$/g, "")
       .trim();
-    return cleaned ? `style="${cleaned}"` : '';
+    return cleaned ? `style="${cleaned}"` : "";
   });
 
   result = result.replace(/<path([^>]*)>/g, (match, attrs) => {
-    if (attrs.includes('stroke=')) return match;
+    if (attrs.includes("stroke=")) return match;
     const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${normalizedStrokeWidth}"`;
-    const cleanAttrs = attrs.replace(/\s*\/\s*$/g, '');
+    const cleanAttrs = attrs.replace(/\s*\/\s*$/g, "");
     return `<path${cleanAttrs}${strokeAttr} />`;
   });
 
@@ -50,7 +53,7 @@ function convertToStrokeOnly(content: string, normalizedStrokeWidth: number): st
   );
 
   // Normalize stroke-width + add non-scaling-stroke so strokes ignore all transforms
-  // (parseSVG scale, per-flower scaleX/Y, layout scaleW/H)
+  // (parseSVG scale, per-flower scale × scaleX/Y, layout scaleW/H)
   result = result.replace(
     /stroke-width="[^"]*"/g,
     `stroke-width="${normalizedStrokeWidth}" vector-effect="non-scaling-stroke"`,
@@ -65,17 +68,14 @@ function stripEditorNamespaces(content: string): string {
   // when their namespace declarations are not present in the composed output.
   sanitized = sanitized.replace(
     /<(?:sodipodi|inkscape):[^>]*>([\s\S]*?)<\/(?:sodipodi|inkscape):[^>]*>/gi,
-    '',
+    "",
   );
-  sanitized = sanitized.replace(
-    /<(?:sodipodi|inkscape):[^>]*\/>/gi,
-    '',
-  );
+  sanitized = sanitized.replace(/<(?:sodipodi|inkscape):[^>]*\/>/gi, "");
   sanitized = sanitized.replace(
     /\s(?:sodipodi|inkscape):[a-zA-Z0-9_.-]+="[^"]*"/g,
-    '',
+    "",
   );
-  sanitized = sanitized.replace(/\sxmlns:(?:sodipodi|inkscape)="[^"]*"/g, '');
+  sanitized = sanitized.replace(/\sxmlns:(?:sodipodi|inkscape)="[^"]*"/g, "");
   return sanitized;
 }
 
@@ -112,7 +112,7 @@ function parseSVG(
     content = gMatch[0];
   } else {
     const svgMatch = svgContent.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-    content = svgMatch ? svgMatch[1] : '';
+    content = svgMatch ? svgMatch[1] : "";
   }
 
   const scaleFactor = BASE_FLOWER_HEIGHT / origHeight;
@@ -131,7 +131,7 @@ function parseSVG(
 
 export function loadFlowerSVG(
   month: string,
-  position: 'left' | 'center' | 'right' | 'center_left' | 'center_right',
+  position: "left" | "center" | "right" | "center_left" | "center_right",
   normalizedStrokeWidth: number = SVG_CONFIG.strokeWidth,
 ): FlowerSVG | null {
   // Accept either storefront labels (e.g. "Februari") or internal keys (e.g. "february")
@@ -160,16 +160,17 @@ export function loadFlowerSVG(
   const filePath = path.join(ASSETS_PATH, fileName);
 
   try {
-    const content = fs.readFileSync(filePath, 'utf8');
+    const content = fs.readFileSync(filePath, "utf8");
     const parsed = parseSVG(content, normalizedStrokeWidth);
 
     parsed.transformCenter = svgInfo.transformCenter;
     parsed.baseRotation = svgInfo.baseRotation;
     parsed.flowerPoly = svgInfo.flowerPoly ?? [];
 
-    // Apply per-flower scale (default 1) to normalize size across flowers
-    const scaleX = svgInfo.scaleX ?? 1;
-    const scaleY = svgInfo.scaleY ?? 1;
+    // Apply per-flower scale: uniform `scale` (default 1) × optional axis scaleX/scaleY
+    const uniform = svgInfo.scale ?? 1;
+    const scaleX = uniform * (svgInfo.scaleX ?? 1);
+    const scaleY = uniform * (svgInfo.scaleY ?? 1);
     if (scaleX !== 1 || scaleY !== 1) {
       parsed.content = `<g transform="scale(${scaleX}, ${scaleY})">${parsed.content}</g>`;
       parsed.width *= scaleX;
@@ -340,7 +341,7 @@ function transformFlower(
   let scaleWUse = scaleW;
   let scaleHUse = scaleH;
 
-  if (charmShape === 'poster') {
+  if (charmShape === "poster") {
     const uniform = Math.max(Math.min(scaleW, scaleH), 0.001);
     scaleWUse = uniform;
     scaleHUse = uniform;
@@ -349,8 +350,8 @@ function transformFlower(
     // - intrinsic SVG scale wrappers (normalization + per-flower scale)
     const scaleRegex = /transform="scale\(([^)]+)\)"/g;
     let intrinsicStrokeScale = 1;
-    for (const match of content.matchAll(scaleRegex)) {
-      const raw = match[1].split(',').map((v) => parseFloat(v.trim()));
+    for (const match of Array.from(content.matchAll(scaleRegex))) {
+      const raw = match[1].split(",").map((v: string) => parseFloat(v.trim()));
       if (!raw.length || !Number.isFinite(raw[0])) continue;
       const sx = raw[0];
       const sy = Number.isFinite(raw[1]) ? raw[1] : sx;
@@ -392,7 +393,7 @@ function transformFlower(
   const needsScale = scaleWUse !== 1 || scaleHUse !== 1;
   const scaleAttr = needsScale
     ? ` scale(${scaleWUse.toFixed(4)}, ${scaleHUse.toFixed(4)})`
-    : '';
+    : "";
   return `
     <g id="flower-${index}"
        transform="rotate(${rotation.toFixed(2)}, ${bindingPoint.x}, ${bindingPoint.y}) translate(${position.x.toFixed(2)}, ${position.y.toFixed(2)})${scaleAttr}">
@@ -429,9 +430,14 @@ export function balanceFlowerAngles(
   layout: LayoutTemplate,
   flowers: Array<FlowerSVG | null>,
 ): LayoutTemplate {
+  const n = layout.slots.length;
+  if (n < 3) {
+    return layout;
+  }
+
   const { bindingPoint } = layout;
   const firstSlot = layout.slots[0];
-  const lastSlot = layout.slots[layout.slots.length - 1];
+  const lastSlot = layout.slots[n - 1];
   const lastFlower = flowers[flowers.length - 1] ?? {
     width: 0,
     height: 0,
@@ -450,7 +456,6 @@ export function balanceFlowerAngles(
   const alphaDeg = alphaRad * (180 / Math.PI);
 
   const slots = layout.slots.map((s) => ({ ...s, rotation: s.rotation }));
-  const n = slots.length;
   const centerIndex = (n - 1) / 2;
 
   // Apply correction proportionally: center flower(s) stay straight, outer flowers absorb the tilt
@@ -470,12 +475,12 @@ function buildPolyOverlay(
   index: number,
 ): string {
   const pts = getTransformedPolygonPoints(flower, slot, bindingPoint);
-  if (!pts) return '';
-  const colors = ['red', 'blue', 'green', 'orange', 'purple'];
+  if (!pts) return "";
+  const colors = ["red", "blue", "green", "orange", "purple"];
   const color = colors[index % colors.length];
   const points = pts
     .map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`)
-    .join(' ');
+    .join(" ");
   return `<polygon id="poly-${index}" points="${points}" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="1" pointer-events="none"/>`;
 }
 
@@ -497,19 +502,19 @@ export function composeBouquet(
             index,
             charmShape,
           )
-        : '',
+        : "",
     )
-    .join('\n');
+    .join("\n");
 
   // const polyOverlays = flowers
   //   .map((flower, index) =>
   //     flower
   //       ? buildPolyOverlay(flower, layout.slots[index], bindingPoint, index)
-  //       : '',
+  //       : "",
   //   )
   //   .filter(Boolean)
-  //   .join('\n');
-  const polyOverlays = '';
+  //   .join("\n");
+  const polyOverlays = "";
 
   const cx = viewBox.width / 2;
   const cy = viewBox.height / 2;
@@ -523,13 +528,13 @@ export function composeBouquet(
 
   const scaleAttr = needsScale
     ? ` transform="translate(${cx}, ${cy}) scale(${config.scaleX}, ${config.scaleY}) translate(${-cx}, ${-cy})"`
-    : '';
+    : "";
 
   // const viewBoxRect =
   //   charmShape === 'poster'
   //     ? `<rect x="${vbX}" y="${vbY}" width="${vbW}" height="${vbH}" fill="rgba(200,200,200,0.2)" stroke="#666" stroke-width="2"/>`
   //     : '';
-  const viewBoxRect = '';
+  const viewBoxRect = "";
 
   let out = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
@@ -546,8 +551,8 @@ export function composeBouquet(
   </g>
 </svg>`;
 
-  if (charmShape === 'poster') {
-    out = out.replace(/\s+vector-effect="non-scaling-stroke"/g, '');
+  if (charmShape === "poster") {
+    out = out.replace(/\s+vector-effect="non-scaling-stroke"/g, "");
   }
 
   return out;

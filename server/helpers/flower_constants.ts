@@ -1,12 +1,14 @@
-import { Point } from './types';
+import { Point } from "./types";
 
 type FlowerAsset = {
-  base?: 'left' | 'center_left' | 'center_right' | 'right';
+  base?: "left" | "center_left" | "center_right" | "right";
   path?: string;
   transformCenter?: Point;
   baseRotation?: number;
   flowerPoly?: Point[];
-  /** Per-flower scale to normalize size (default 1). Use for flowers that appear too large or too small. */
+  /** Uniform scale factor for this asset (default 1). Multiplied with scaleX/scaleY. */
+  scale?: number;
+  /** Per-axis scale after `scale` (each defaults to 1). */
   scaleX?: number;
   scaleY?: number;
 };
@@ -23,11 +25,10 @@ export const FLOWER_FILES: Record<
 > = {
   january: {
     left: {
-      path: 'january_left.svg',
+      scale: 1.0,
+      path: "january_left.svg",
       transformCenter: { x: 0.627, y: 0.756 },
       baseRotation: -3.0,
-      scaleX: 0.9,
-      scaleY: 0.9,
       flowerPoly: [
         { x: 0.32, y: 0.01 },
         { x: 0.32, y: 0.01 },
@@ -64,7 +65,7 @@ export const FLOWER_FILES: Record<
         { x: 0.418, y: 0.032 },
       ],
     },
-    center_left: { base: 'left', baseRotation: -3.0 },
+    center_left: { scale: 1.0, base: "left", baseRotation: -3.0 },
     // center_left: {
     //   path: 'january_center_left.svg',
     //   transformCenter: { x: 0.95, y: 0.812 },
@@ -183,10 +184,11 @@ export const FLOWER_FILES: Record<
     //     { x: 0.082, y: 0.595 },
     //   ],
     // },
-    center: { base: 'right', baseRotation: 3.0 },
-    center_right: { base: 'right', baseRotation: 3.0 },
+    center: { scale: 1.0, base: "right", baseRotation: 3.0 },
+    center_right: { scale: 1.0, base: "right", baseRotation: 3.0 },
     right: {
-      path: 'january_right.svg',
+      scale: 1.0,
+      path: "january_right.svg",
       transformCenter: { x: 0.383, y: 0.788 },
       baseRotation: 3.0,
       flowerPoly: [
@@ -241,39 +243,52 @@ export const FLOWER_FILES: Record<
   },
   february: {
     left: {
-      path: 'february_left.svg',
+      scale: 0.8,
+      path: "february_left.svg",
       transformCenter: { x: 0.933, y: 0.779 },
       baseRotation: 17.0,
-      scaleX: 0.8,
-      scaleY: 0.85,
       flowerPoly: [
-        { x: 0.8, y: 0.47 },
-        { x: 0.775, y: 0.406 },
-        { x: 0.808, y: 0.278 },
-        { x: 0.808, y: 0.248 },
-        { x: 0.89, y: 0.208 },
-        { x: 0.89, y: 0.178 },
-        { x: 0.912, y: 0.11 },
-        { x: 0.861, y: 0.052 },
-        { x: 0.786, y: 0.056 },
-        { x: 0.672, y: 0.036 },
-        { x: 0.607, y: 0.074 },
-        { x: 0.396, y: 0.028 },
-        { x: 0.267, y: 0.008 },
-        { x: 0.052, y: 0.026 },
-        { x: 0.023, y: 0.178 },
-        { x: 0.041, y: 0.302 },
-        { x: 0.238, y: 0.322 },
-        { x: 0.485, y: 0.248 },
-        { x: 0.697, y: 0.432 },
+        { x: 0.335, y: 0.268 },
+        { x: 0.242, y: 0.286 },
+        { x: 0.188, y: 0.284 },
+        { x: 0.098, y: 0.25 },
+        { x: 0.045, y: 0.186 },
+        { x: 0.066, y: 0.17 },
+        { x: 0.02, y: 0.136 },
+        { x: 0.02, y: 0.082 },
+        { x: 0.073, y: 0.04 },
+        { x: 0.174, y: 0.01 },
+        { x: 0.267, y: 0.012 },
+        { x: 0.346, y: 0.036 },
+        { x: 0.432, y: 0.052 },
+        { x: 0.492, y: 0.09 },
+        { x: 0.532, y: 0.124 },
+        { x: 0.596, y: 0.09 },
+        { x: 0.697, y: 0.056 },
+        { x: 0.775, y: 0.066 },
+        { x: 0.879, y: 0.074 },
+        { x: 0.915, y: 0.138 },
+        { x: 0.89, y: 0.166 },
+        { x: 0.876, y: 0.18 },
+        { x: 0.858, y: 0.212 },
+        { x: 0.843, y: 0.24 },
+        { x: 0.797, y: 0.246 },
+        { x: 0.793, y: 0.326 },
+        { x: 0.768, y: 0.404 },
+        { x: 0.761, y: 0.422 },
+        { x: 0.736, y: 0.434 },
+        { x: 0.711, y: 0.396 },
+        { x: 0.614, y: 0.302 },
+        { x: 0.475, y: 0.21 },
+        { x: 0.424, y: 0.242 },
+        { x: 0.36, y: 0.254 },
       ],
     },
     center_left: {
-      path: 'february_center_left.svg',
+      scale: 0.9,
+      path: "february_center_left.svg",
       transformCenter: { x: 0.933, y: 0.778 },
       baseRotation: 17.0,
-      scaleX: 0.9,
-      scaleY: 0.85,
       flowerPoly: [
         { x: 0.879, y: 0.574 },
         { x: 0.783, y: 0.424 },
@@ -304,10 +319,11 @@ export const FLOWER_FILES: Record<
         { x: 0.79, y: 0.6 },
       ],
     },
-    center: { base: 'center_left', baseRotation: 20.0 },
+    center: { scale: 0.95, base: "center_left", baseRotation: 20.0 },
     center_right: {
-      base: 'center_right',
-      path: 'february_center_right.svg',
+      scale: 0.9,
+      base: "center_right",
+      path: "february_center_right.svg",
       transformCenter: { x: 0.07, y: 0.778 },
       baseRotation: -18.0,
       flowerPoly: [
@@ -340,11 +356,10 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'february_right.svg',
+      scale: 0.9,
+      path: "february_right.svg",
       transformCenter: { x: 0.063, y: 0.788 },
       baseRotation: -16.0,
-      scaleX: 0.8,
-      scaleY: 0.85,
       flowerPoly: [
         { x: 0.084, y: 0.616 },
         { x: 0.152, y: 0.482 },
@@ -371,7 +386,8 @@ export const FLOWER_FILES: Record<
   },
   march: {
     left: {
-      path: 'march_left.svg',
+      scale: 1.0,
+      path: "march_left.svg",
       transformCenter: { x: 0.93, y: 0.766 },
       baseRotation: 1.5,
       flowerPoly: [
@@ -412,7 +428,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'march_center_left.svg',
+      scale: 1.0,
+      path: "march_center_left.svg",
       transformCenter: { x: 0.914, y: 0.792 },
       baseRotation: 1.5,
       flowerPoly: [
@@ -447,14 +464,14 @@ export const FLOWER_FILES: Record<
       ],
     },
     center: {
-      base: 'center_right',
-      scaleX: 1.05,
-      scaleY: 1.05,
+      scale: 1.0,
+      base: "center_right",
       baseRotation: -4.0,
     },
     center_right: {
-      base: 'center_right',
-      path: 'march_center_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "march_center_right.svg",
       transformCenter: { x: 0.083, y: 0.81 },
       baseRotation: -1.5,
       flowerPoly: [
@@ -501,7 +518,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'march_right.svg',
+      scale: 1.0,
+      path: "march_right.svg",
       transformCenter: { x: 0.072, y: 0.794 },
       baseRotation: 1.5,
       flowerPoly: [
@@ -544,7 +562,8 @@ export const FLOWER_FILES: Record<
   },
   april: {
     left: {
-      path: 'april_left.svg',
+      scale: 1.0,
+      path: "april_left.svg",
       transformCenter: { x: 0.94, y: 0.736 },
       baseRotation: 2.0,
       flowerPoly: [
@@ -613,7 +632,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'april_left.svg',
+      scale: 1.0,
+      path: "april_left.svg",
       transformCenter: { x: 0.94, y: 0.796 },
       baseRotation: -2.0,
       flowerPoly: [
@@ -682,11 +702,13 @@ export const FLOWER_FILES: Record<
       ],
     },
     center: {
-      base: 'center_left',
+      scale: 1.0,
+      base: "center_left",
       baseRotation: 7.0,
     },
     center_right: {
-      path: 'april_right.svg',
+      scale: 1.0,
+      path: "april_right.svg",
       transformCenter: { x: 0.055, y: 0.812 },
       baseRotation: -1.5,
       flowerPoly: [
@@ -756,7 +778,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'april_right.svg',
+      scale: 1.0,
+      path: "april_right.svg",
       transformCenter: { x: 0.05, y: 0.788 },
       baseRotation: -3.0,
       flowerPoly: [
@@ -823,7 +846,8 @@ export const FLOWER_FILES: Record<
   },
   may: {
     left: {
-      path: 'may_left.svg',
+      scale: 1.0,
+      path: "may_left.svg",
       transformCenter: { x: 0.364, y: 0.744 },
       baseRotation: -18.0,
       flowerPoly: [
@@ -855,7 +879,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'may_center_left.svg',
+      scale: 1.0,
+      path: "may_center_left.svg",
       transformCenter: { x: 0.281, y: 0.796 },
       baseRotation: -18.0,
       flowerPoly: [
@@ -889,10 +914,11 @@ export const FLOWER_FILES: Record<
         { x: 0.704, y: 0.528 },
       ],
     },
-    center: { base: 'center_right', baseRotation: 20 },
+    center: { scale: 1.0, base: "center_right", baseRotation: 20 },
     center_right: {
-      base: 'center_right',
-      path: 'may_center_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "may_center_right.svg",
       transformCenter: { x: 0.692, y: 0.784 },
       baseRotation: 16.0,
       flowerPoly: [
@@ -931,9 +957,10 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'may_right.svg',
+      scale: 1.0,
+      path: "may_right.svg",
       transformCenter: { x: 0.636, y: 0.744 },
-      baseRotation: 17.0,
+      baseRotation: 21.0,
       flowerPoly: [
         { x: 0.301, y: 0.582 },
         { x: 0.212, y: 0.534 },
@@ -982,7 +1009,8 @@ export const FLOWER_FILES: Record<
   },
   june: {
     left: {
-      path: 'june_left.svg',
+      scale: 1.1,
+      path: "june_left.svg",
       transformCenter: { x: 0.53, y: 0.677 },
       baseRotation: -12.0,
       flowerPoly: [
@@ -1023,7 +1051,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'june_center_left.svg',
+      scale: 1.1,
+      path: "june_center_left.svg",
       transformCenter: { x: 0.487, y: 0.758 },
       baseRotation: -3.0,
       flowerPoly: [
@@ -1052,14 +1081,14 @@ export const FLOWER_FILES: Record<
       ],
     },
     center: {
-      base: 'center_left',
-      scaleX: 1.1,
-      scaleY: 1.1,
+      scale: 1.1,
+      base: "center_left",
       baseRotation: 0.0,
     },
     center_right: {
-      base: 'center_right',
-      path: 'june_center_right.svg',
+      scale: 1.1,
+      base: "center_right",
+      path: "june_center_right.svg",
       transformCenter: { x: 0.506, y: 0.75 },
       baseRotation: 1.0,
       flowerPoly: [
@@ -1086,11 +1115,10 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'june_right.svg',
+      scale: 1.1,
+      path: "june_right.svg",
       transformCenter: { x: 0.465, y: 0.672 },
       baseRotation: 16.0,
-      // scaleY: 1.1,
-      // scaleX: 1.1,
       flowerPoly: [
         { x: 0.41, y: 0.58 },
         { x: 0.399, y: 0.342 },
@@ -1128,7 +1156,8 @@ export const FLOWER_FILES: Record<
   },
   july: {
     left: {
-      path: 'july_left.svg',
+      scale: 1.0,
+      path: "july_left.svg",
       transformCenter: { x: 0.736, y: 0.68 },
       baseRotation: 3.0,
       flowerPoly: [
@@ -1168,7 +1197,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'july_center_left.svg',
+      scale: 1.0,
+      path: "july_center_left.svg",
       transformCenter: { x: 0.696, y: 0.758 },
       baseRotation: 1.0,
       flowerPoly: [
@@ -1202,10 +1232,11 @@ export const FLOWER_FILES: Record<
         { x: 0.702, y: 0.56 },
       ],
     },
-    center: { base: 'center_left', baseRotation: 1.0 },
+    center: { scale: 1.0, base: "center_left", baseRotation: 1.0 },
     center_right: {
-      base: 'center_right',
-      path: 'july_center_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "july_center_right.svg",
       transformCenter: { x: 0.304, y: 0.79 },
       baseRotation: -1.0,
       flowerPoly: [
@@ -1238,7 +1269,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'july_right.svg',
+      scale: 1.0,
+      path: "july_right.svg",
       transformCenter: { x: 0.253, y: 0.672 },
       baseRotation: -1.0,
       flowerPoly: [
@@ -1256,7 +1288,8 @@ export const FLOWER_FILES: Record<
   },
   august: {
     left: {
-      path: 'august_left.svg',
+      scale: 1.0,
+      path: "august_left.svg",
       transformCenter: { x: 0.863, y: 0.73 },
       baseRotation: 4.5,
       flowerPoly: [
@@ -1288,7 +1321,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'august_center_left.svg',
+      scale: 1.0,
+      path: "august_center_left.svg",
       transformCenter: { x: 0.868, y: 0.774 },
       baseRotation: 4.0,
       flowerPoly: [
@@ -1324,10 +1358,11 @@ export const FLOWER_FILES: Record<
         { x: 0.803, y: 0.562 },
       ],
     },
-    center: { base: 'center_left', baseRotation: 5.0 },
+    center: { scale: 1.0, base: "center_left", baseRotation: 5.0 },
     center_right: {
-      base: 'center_right',
-      path: 'august_center_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "august_center_right.svg",
       transformCenter: { x: 0.119, y: 0.796 },
       baseRotation: -8.5,
       flowerPoly: [
@@ -1361,7 +1396,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'august_right.svg',
+      scale: 1.0,
+      path: "august_right.svg",
       transformCenter: { x: 0.133, y: 0.748 },
       baseRotation: -6.5,
       flowerPoly: [
@@ -1396,7 +1432,8 @@ export const FLOWER_FILES: Record<
   },
   september: {
     left: {
-      path: 'september_left.svg',
+      scale: 1.0,
+      path: "september_left.svg",
       transformCenter: { x: 0.587, y: 0.752 },
       baseRotation: -6.0,
       flowerPoly: [
@@ -1425,7 +1462,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'september_center_left.svg',
+      scale: 1.0,
+      path: "september_center_left.svg",
       transformCenter: { x: 0.507, y: 0.77 },
       baseRotation: -6.5,
       flowerPoly: [
@@ -1457,53 +1495,47 @@ export const FLOWER_FILES: Record<
         { x: 0.617, y: 0.58 },
       ],
     },
-    center: { base: 'right', baseRotation: 3.5 },
-    // center: {
-    //   base: 'center_left',
-    //   path: 'september_center_left.svg',
-    //   transformCenter: { x: 0.501, y: 0.794 },
-    //   baseRotation: 11.5,
-    //   flowerPoly: [
-    //     { x: 0.28, y: 0.577 },
-    //     { x: 0.254, y: 0.393 },
-    //     { x: 0.293, y: 0.247 },
-    //     { x: 0.325, y: 0.177 },
-    //     { x: 0.112, y: 0.133 },
-    //     { x: 0.015, y: 0.097 },
-    //     { x: 0.022, y: 0.045 },
-    //     { x: 0.099, y: 0.013 },
-    //     { x: 0.254, y: 0.005 },
-    //     { x: 0.325, y: 0.001 },
-    //     { x: 0.635, y: 0.001 },
-    //     { x: 0.797, y: 0.015 },
-    //     { x: 0.849, y: 0.055 },
-    //     { x: 0.952, y: 0.105 },
-    //     { x: 0.978, y: 0.181 },
-    //     { x: 0.945, y: 0.215 },
-    //     { x: 0.836, y: 0.221 },
-    //     { x: 0.551, y: 0.221 },
-    //     { x: 0.403, y: 0.295 },
-    //     { x: 0.551, y: 0.301 },
-    //     { x: 0.577, y: 0.349 },
-    //     { x: 0.513, y: 0.359 },
-    //     { x: 0.538, y: 0.389 },
-    //     { x: 0.422, y: 0.423 },
-    //     { x: 0.377, y: 0.417 },
-    //     { x: 0.332, y: 0.557 },
-    //     { x: 0.332, y: 0.557 },
-    //   ],
-    // },
+    center: { scale: 1.0, base: "center_right", baseRotation: 9 },
     center_right: {
-      base: 'right',
-      baseRotation: 10.0,
-      transformCenter: { x: 0.443, y: 0.797 },
+      scale: 1.0,
+      path: "september_center_right.svg",
+      transformCenter: { x: 0.501, y: 0.794 },
+      baseRotation: 11.5,
+      flowerPoly: [
+        { x: 0.28, y: 0.577 },
+        { x: 0.254, y: 0.393 },
+        { x: 0.293, y: 0.247 },
+        { x: 0.325, y: 0.177 },
+        { x: 0.112, y: 0.133 },
+        { x: 0.015, y: 0.097 },
+        { x: 0.022, y: 0.045 },
+        { x: 0.099, y: 0.013 },
+        { x: 0.254, y: 0.005 },
+        { x: 0.325, y: 0.001 },
+        { x: 0.635, y: 0.001 },
+        { x: 0.797, y: 0.015 },
+        { x: 0.849, y: 0.055 },
+        { x: 0.952, y: 0.105 },
+        { x: 0.978, y: 0.181 },
+        { x: 0.945, y: 0.215 },
+        { x: 0.836, y: 0.221 },
+        { x: 0.551, y: 0.221 },
+        { x: 0.403, y: 0.295 },
+        { x: 0.551, y: 0.301 },
+        { x: 0.577, y: 0.349 },
+        { x: 0.513, y: 0.359 },
+        { x: 0.538, y: 0.389 },
+        { x: 0.422, y: 0.423 },
+        { x: 0.377, y: 0.417 },
+        { x: 0.332, y: 0.557 },
+        { x: 0.332, y: 0.557 },
+      ],
     },
     right: {
-      path: 'september_right.svg',
+      scale: 1.0,
+      path: "september_right.svg",
       transformCenter: { x: 0.425, y: 0.776 },
       baseRotation: 10.0,
-      scaleX: 1.05,
-      scaleY: 1.05,
       flowerPoly: [
         { x: 0.379, y: 0.61 },
         { x: 0.402, y: 0.53 },
@@ -1536,7 +1568,8 @@ export const FLOWER_FILES: Record<
   },
   october: {
     left: {
-      path: 'october_left.svg',
+      scale: 1.0,
+      path: "october_left.svg",
       transformCenter: { x: 0.629, y: 0.764 },
       baseRotation: -7.0,
       flowerPoly: [
@@ -1567,7 +1600,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'october_left.svg',
+      scale: 1.0,
+      path: "october_left.svg",
       transformCenter: { x: 0.594, y: 0.796 },
       baseRotation: -6.0,
       flowerPoly: [
@@ -1597,10 +1631,11 @@ export const FLOWER_FILES: Record<
         { x: 0.699, y: 0.662 },
       ],
     },
-    center: { base: 'center_right', baseRotation: 3.0 },
+    center: { scale: 1.0, base: "center_right", baseRotation: 3.0 },
     center_right: {
-      base: 'center_right',
-      path: 'october_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "october_right.svg",
       transformCenter: { x: 0.399, y: 0.798 },
       baseRotation: 8.0,
       flowerPoly: [
@@ -1633,7 +1668,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'october_right.svg',
+      scale: 1.0,
+      path: "october_right.svg",
       transformCenter: { x: 0.384, y: 0.78 },
       baseRotation: 10.0,
       flowerPoly: [
@@ -1670,7 +1706,8 @@ export const FLOWER_FILES: Record<
   },
   november: {
     left: {
-      path: 'november_left.svg',
+      scale: 1.0,
+      path: "november_left.svg",
       transformCenter: { x: 0.632, y: 0.764 },
       baseRotation: -1.5,
       flowerPoly: [
@@ -1704,7 +1741,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'november_left.svg',
+      scale: 1.0,
+      path: "november_left.svg",
       transformCenter: { x: 0.627, y: 0.776 },
       baseRotation: -2.0,
       flowerPoly: [
@@ -1743,10 +1781,11 @@ export const FLOWER_FILES: Record<
         { x: 0.627, y: 0.622 },
       ],
     },
-    center: { base: 'center_left', baseRotation: 0 },
+    center: { scale: 1.0, base: "center_left", baseRotation: 0 },
     center_right: {
-      base: 'center_right',
-      path: 'november_right.svg',
+      scale: 1.0,
+      base: "center_right",
+      path: "november_right.svg",
       transformCenter: { x: 0.382, y: 0.794 },
       baseRotation: 2.0,
       flowerPoly: [
@@ -1782,7 +1821,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'november_right.svg',
+      scale: 1.0,
+      path: "november_right.svg",
       transformCenter: { x: 0.366, y: 0.756 },
       baseRotation: 3.5,
       flowerPoly: [
@@ -1823,7 +1863,8 @@ export const FLOWER_FILES: Record<
   },
   december: {
     left: {
-      path: 'december_left.svg',
+      scale: 1.0,
+      path: "december_left.svg",
       transformCenter: { x: 0.879, y: 0.74 },
       baseRotation: 6.0,
       flowerPoly: [
@@ -1852,7 +1893,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     center_left: {
-      path: 'december_center_left.svg',
+      scale: 1.0,
+      path: "december_center_left.svg",
       transformCenter: { x: 0.709, y: 0.771 },
       baseRotation: 4.5,
       flowerPoly: [
@@ -1894,9 +1936,10 @@ export const FLOWER_FILES: Record<
         { x: 0.661, y: 0.686 },
       ],
     },
-    center: { base: 'center_left', baseRotation: 7.0 },
+    center: { scale: 1.0, base: "center_left", baseRotation: 7.0 },
     center_right: {
-      path: 'december_center_right.svg',
+      scale: 1.0,
+      path: "december_center_right.svg",
       transformCenter: { x: 0.313, y: 0.782 },
       baseRotation: -4.5,
       flowerPoly: [
@@ -1946,7 +1989,8 @@ export const FLOWER_FILES: Record<
       ],
     },
     right: {
-      path: 'december_right.svg',
+      scale: 1.0,
+      path: "december_right.svg",
       transformCenter: { x: 0.101, y: 0.762 },
       baseRotation: -3.0,
       flowerPoly: [

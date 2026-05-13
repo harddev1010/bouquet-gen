@@ -45,14 +45,16 @@ export const BACK_TEXT_PROPERTY_NAMES = [
   "Rückseite personalisierter Text",
 ] as const;
 
+/** Base fan angles (deg) before each flower's `baseRotation`. Wider + even steps avoid “tiny outer” look from over-shrinking + uneven gaps. */
 export const LAYOUT_ANGLES: Record<number, number[]> = {
   1: [0],
-  2: [-15, 15],
+  2: [-15, 25],
   3: [-20, 0, 20],
-  4: [-20, -6, 6, 20],
-  5: [-18, -8, 0, 8, 18],
+  4: [-25, -10, 10, 25],
+  5: [-15, -8, 0, 8, 15],
 };
 
+/** Per-slot scale; keep uniform 1.0 so engraved charms don’t get “outer blob” flowers (see product feedback). */
 export const LAYOUT_SCALE: Record<number, { w: number; h: number }[]> = {
   1: [{ w: 1.0, h: 1.0 }],
   2: [
@@ -65,17 +67,17 @@ export const LAYOUT_SCALE: Record<number, { w: number; h: number }[]> = {
     { w: 1.0, h: 1.0 },
   ],
   4: [
-    { w: 0.9, h: 0.9 },
     { w: 1.0, h: 1.0 },
+    { w: 1.1, h: 1.1 },
+    { w: 1.1, h: 1.1 },
     { w: 1.0, h: 1.0 },
-    { w: 0.9, h: 0.9 },
   ],
   5: [
-    { w: 0.8, h: 0.8 },
-    { w: 1.0, h: 1.0 },
-    { w: 1.0, h: 1.0 },
-    { w: 1.0, h: 1.0 },
-    { w: 0.8, h: 0.8 },
+    { w: 0.85, h: 0.85 },
+    { w: 0.9, h: 0.9 },
+    { w: 0.95, h: 0.95 },
+    { w: 0.9, h: 0.9 },
+    { w: 0.85, h: 0.85 },
   ],
 };
 
