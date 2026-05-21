@@ -27,8 +27,8 @@ export const FLOWER_FILES: Record<
     left: {
       scale: 1.0,
       path: "january_left.svg",
-      transformCenter: { x: 0.627, y: 0.756 },
-      baseRotation: -3.0,
+      transformCenter: { x: 0.65, y: 0.726 },
+      baseRotation: 0,
       flowerPoly: [
         { x: 0.32, y: 0.01 },
         { x: 0.32, y: 0.01 },
@@ -65,7 +65,7 @@ export const FLOWER_FILES: Record<
         { x: 0.418, y: 0.032 },
       ],
     },
-    center_left: { scale: 1.0, base: "left", baseRotation: -3.0 },
+    center_left: { scale: 1.0, base: "left", baseRotation: 0 },
     // center_left: {
     //   path: 'january_center_left.svg',
     //   transformCenter: { x: 0.95, y: 0.812 },
@@ -184,13 +184,13 @@ export const FLOWER_FILES: Record<
     //     { x: 0.082, y: 0.595 },
     //   ],
     // },
-    center: { scale: 1.0, base: "right", baseRotation: 3.0 },
-    center_right: { scale: 1.0, base: "right", baseRotation: 3.0 },
+    center: { scale: 1.0, base: "right", baseRotation: 0 },
+    center_right: { scale: 1.0, base: "right", baseRotation: 0 },
     right: {
       scale: 1.0,
       path: "january_right.svg",
-      transformCenter: { x: 0.383, y: 0.788 },
-      baseRotation: 3.0,
+      transformCenter: { x: 0.359, y: 0.75 },
+      baseRotation: 0.0,
       flowerPoly: [
         { x: 0.96, y: 0.17 },
         { x: 0.98, y: 0.204 },
@@ -245,8 +245,8 @@ export const FLOWER_FILES: Record<
     left: {
       scale: 0.8,
       path: "february_left.svg",
-      transformCenter: { x: 0.933, y: 0.779 },
-      baseRotation: 17.0,
+      transformCenter: { x: 0.937, y: 0.746 },
+      baseRotation: 20.0,
       flowerPoly: [
         { x: 0.335, y: 0.268 },
         { x: 0.242, y: 0.286 },
@@ -287,8 +287,8 @@ export const FLOWER_FILES: Record<
     center_left: {
       scale: 0.9,
       path: "february_center_left.svg",
-      transformCenter: { x: 0.933, y: 0.778 },
-      baseRotation: 17.0,
+      transformCenter: { x: 0.929, y: 0.756 },
+      baseRotation: 20.0,
       flowerPoly: [
         { x: 0.879, y: 0.574 },
         { x: 0.783, y: 0.424 },
@@ -324,8 +324,8 @@ export const FLOWER_FILES: Record<
       scale: 0.9,
       base: "center_right",
       path: "february_center_right.svg",
-      transformCenter: { x: 0.07, y: 0.778 },
-      baseRotation: -18.0,
+      transformCenter: { x: 0.063, y: 0.752 },
+      baseRotation: -20.0,
       flowerPoly: [
         { x: 0.127, y: 0.568 },
         { x: 0.206, y: 0.428 },
@@ -358,8 +358,8 @@ export const FLOWER_FILES: Record<
     right: {
       scale: 0.9,
       path: "february_right.svg",
-      transformCenter: { x: 0.063, y: 0.788 },
-      baseRotation: -16.0,
+      transformCenter: { x: 0.063, y: 0.752 },
+      baseRotation: -20.0,
       flowerPoly: [
         { x: 0.084, y: 0.616 },
         { x: 0.152, y: 0.482 },
@@ -388,8 +388,8 @@ export const FLOWER_FILES: Record<
     left: {
       scale: 1.0,
       path: "march_left.svg",
-      transformCenter: { x: 0.93, y: 0.766 },
-      baseRotation: 1.5,
+      transformCenter: { x: 0.949, y: 0.762 },
+      baseRotation: 4.5,
       flowerPoly: [
         { x: 0.974, y: 0.544 },
         { x: 0.974, y: 0.544 },
@@ -430,8 +430,8 @@ export const FLOWER_FILES: Record<
     center_left: {
       scale: 1.0,
       path: "march_center_left.svg",
-      transformCenter: { x: 0.914, y: 0.792 },
-      baseRotation: 1.5,
+      transformCenter: { x: 0.914, y: 0.762 },
+      baseRotation: 4.5,
       flowerPoly: [
         { x: 0.97, y: 0.504 },
         { x: 0.963, y: 0.414 },
@@ -466,13 +466,13 @@ export const FLOWER_FILES: Record<
     center: {
       scale: 1.0,
       base: "center_right",
-      baseRotation: -4.0,
+      baseRotation: -7.0,
     },
     center_right: {
       scale: 1.0,
       base: "center_right",
       path: "march_center_right.svg",
-      transformCenter: { x: 0.083, y: 0.81 },
+      transformCenter: { x: 0.04, y: 0.76 },
       baseRotation: -1.5,
       flowerPoly: [
         { x: 0.003, y: 0.562 },
@@ -520,8 +520,8 @@ export const FLOWER_FILES: Record<
     right: {
       scale: 1.0,
       path: "march_right.svg",
-      transformCenter: { x: 0.072, y: 0.794 },
-      baseRotation: 1.5,
+      transformCenter: { x: 0.028, y: 0.746 },
+      baseRotation: -2.0,
       flowerPoly: [
         { x: 0.022, y: 0.502 },
         { x: 0.04, y: 0.364 },
@@ -1434,7 +1434,7 @@ export const FLOWER_FILES: Record<
     left: {
       scale: 1.0,
       path: "september_left.svg",
-      transformCenter: { x: 0.587, y: 0.752 },
+      transformCenter: { x: 0.598, y: 0.716 },
       baseRotation: -6.0,
       flowerPoly: [
         { x: 0.72, y: 0.57 },
@@ -1991,7 +1991,7 @@ export const FLOWER_FILES: Record<
     right: {
       scale: 1.0,
       path: "december_right.svg",
-      transformCenter: { x: 0.101, y: 0.762 },
+      transformCenter: { x: 0.097, y: 0.745 },
       baseRotation: -3.0,
       flowerPoly: [
         { x: 0.156, y: 0.562 },

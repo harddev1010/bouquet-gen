@@ -403,6 +403,7 @@ export async function registerRoutes(
         flowers,
         charmShape: "poster",
       });
+
       const posterResult = await generatePoster(
         { svg: bouquetResult.svg, title, names },
         { flowers },

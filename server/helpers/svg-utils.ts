@@ -22,6 +22,26 @@ function removeBackgroundPath(svgContent: string): string {
   return svgContent.replace(/<g>\s*<path[^>]*Z"\s*\/?>\s*<\/g>/i, "");
 }
 
+const STROKED_SHAPE_TAG_RE =
+  /<(path|circle|ellipse|line|polyline|polygon|rect)\b([^>]*?)(\s*\/)?>/g;
+
+function cleanStyleStrokeProps(styleBody: string): string {
+  return styleBody
+    .replace(/(^|;)\s*stroke-width\s*:\s*[^;"]*/gi, "$1")
+    .replace(/(^|;)\s*stroke-linecap\s*:\s*[^;"]*/gi, "$1")
+    .replace(/(^|;)\s*stroke-linejoin\s*:\s*[^;"]*/gi, "$1")
+    .replace(/;;+/g, ";")
+    .replace(/^;|;$/g, "")
+    .trim();
+}
+
+function stripStyleStrokeProps(attrs: string): string {
+  return attrs.replace(/style="([^"]*)"/g, (_match, styleBody: string) => {
+    const cleaned = cleanStyleStrokeProps(styleBody);
+    return cleaned ? `style="${cleaned}"` : "";
+  });
+}
+
 function convertToStrokeOnly(
   content: string,
   normalizedStrokeWidth: number,
@@ -40,11 +60,12 @@ function convertToStrokeOnly(
     return cleaned ? `style="${cleaned}"` : "";
   });
 
-  result = result.replace(/<path([^>]*)>/g, (match, attrs) => {
+  result = result.replace(/<path([^>]*?)(\s*\/)?>/g, (match, attrs, selfClose) => {
     if (attrs.includes("stroke=")) return match;
     const strokeAttr = ` stroke="${SVG_CONFIG.strokeColor}" stroke-width="${normalizedStrokeWidth}"`;
     const cleanAttrs = attrs.replace(/\s*\/\s*$/g, "");
-    return `<path${cleanAttrs}${strokeAttr} />`;
+    const close = selfClose?.trim() ? " />" : ">";
+    return `<path${cleanAttrs}${strokeAttr}${close}`;
   });
 
   result = result.replace(
@@ -372,10 +393,10 @@ function transformFlower(
       .replace(/stroke-linejoin="[^"]*"/g, 'stroke-linejoin="round"');
 
     content = content.replace(
-      /<(path|circle|ellipse|line|polyline|polygon|rect)\b([^>]*)>/g,
-      (match, tagName: string, attrs: string) => {
+      STROKED_SHAPE_TAG_RE,
+      (match, tagName: string, attrs: string, selfClose: string | undefined) => {
         if (!/\sstroke="[^"]*"/.test(attrs)) return match;
-        let nextAttrs = attrs;
+        let nextAttrs = stripStyleStrokeProps(attrs.replace(/\s*\/\s*$/g, ""));
         if (!/\sstroke-width="[^"]*"/.test(nextAttrs)) {
           nextAttrs += ` stroke-width="${strokeUserText}"`;
         }
@@ -385,7 +406,8 @@ function transformFlower(
         if (!/\sstroke-linejoin="[^"]*"/.test(nextAttrs)) {
           nextAttrs += ' stroke-linejoin="round"';
         }
-        return `<${tagName}${nextAttrs}>`;
+        const close = selfClose?.trim() ? " />" : ">";
+        return `<${tagName}${nextAttrs}${close}`;
       },
     );
   }

@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { getProjectRoot } from './path-utils';
-import PDFDocument from 'pdfkit';
-import SVGtoPDF from 'svg-to-pdfkit';
+import * as fs from "fs";
+import * as path from "path";
+import { getProjectRoot } from "./path-utils";
+import PDFDocument from "pdfkit";
+import SVGtoPDF from "svg-to-pdfkit";
 import {
   A4_WIDTH_PT,
   A4_HEIGHT_PT,
@@ -24,10 +24,10 @@ import {
   LOGO_PATH,
   LOGO_BOTTOM_MARGIN_MM,
   LOGO_SIDE_MARGIN_MM,
-} from './poster-constants';
-import { tintLogoToMamaGrayPng } from './logo-tint';
+} from "./poster-constants";
+import { tintLogoToMamaGrayPng } from "./logo-tint";
 
-const OUTPUT_DIR = path.join(getProjectRoot(), 'generated_pdf');
+const OUTPUT_DIR = path.join(getProjectRoot(), "generated_pdf");
 
 export interface GeneratePosterInput {
   svg: string;
@@ -75,21 +75,20 @@ function drawLogo(
     const tinted = tintLogoToMamaGrayPng(logoPath);
     const imageSrc = tinted ?? logoPath;
     // pdfkit typings omit openImage on PDFDocument; runtime supports it
-    const img = (doc as unknown as { openImage: (p: string | Buffer) => unknown }).openImage(
-      imageSrc,
-    ) as { height: number; width: number };
+    const img = (
+      doc as unknown as { openImage: (p: string | Buffer) => unknown }
+    ).openImage(imageSrc) as { height: number; width: number };
     const sideInsetPt = mmToPt(LOGO_SIDE_MARGIN_MM);
     const bottomInsetPt = mmToPt(LOGO_BOTTOM_MARGIN_MM);
     const logoWidth = Math.max(1, A4_WIDTH_PT - 2 * sideInsetPt);
     const logoHeight = (img.height / img.width) * logoWidth;
     const x = (A4_WIDTH_PT - logoWidth) / 2;
     const y = A4_HEIGHT_PT - bottomInsetPt - logoHeight;
-    (doc as InstanceType<typeof PDFDocument> & { image: (src: unknown, ...args: unknown[]) => void }).image(
-      img,
-      x,
-      y,
-      { width: logoWidth },
-    );
+    (
+      doc as InstanceType<typeof PDFDocument> & {
+        image: (src: unknown, ...args: unknown[]) => void;
+      }
+    ).image(img, x, y, { width: logoWidth });
   } catch {
     // Logo missing or invalid — skip silently
   }
@@ -109,7 +108,7 @@ function generateFilename(
     return `poster_${orderId}_${lineItemId}_${timestamp}.pdf`;
   }
   if (flowers && flowers.length > 0) {
-    const flowerList = flowers.join('_').toLowerCase().replace(/\s/g, '');
+    const flowerList = flowers.join("_").toLowerCase().replace(/\s/g, "");
     return `poster_${flowerList}_${timestamp}.pdf`;
   }
   return `poster_${timestamp}.pdf`;
@@ -140,14 +139,14 @@ export async function generatePoster(
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
-      size: 'A4',
+      size: "A4",
       margin: 0,
       autoFirstPage: true,
     });
 
     const chunks: Buffer[] = [];
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-    doc.on('end', () => {
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => {
       const buffer = Buffer.concat(chunks);
       const outDir = options?.outputDir ?? OUTPUT_DIR;
       ensureDir(outDir);
@@ -160,16 +159,16 @@ export async function generatePoster(
       fs.writeFileSync(filepath, buffer);
       resolve({ filename, path: filepath, buffer });
     });
-    doc.on('error', reject);
+    doc.on("error", reject);
 
     const useTitleFont = fontExists(FONT_TITLE);
     const useNamesFont = fontExists(FONT_NAMES);
 
     if (useTitleFont) {
-      doc.registerFont('PosterTitle', FONT_TITLE);
+      doc.registerFont("PosterTitle", FONT_TITLE);
     }
     if (useNamesFont) {
-      doc.registerFont('PosterNames', FONT_NAMES);
+      doc.registerFont("PosterNames", FONT_NAMES);
     }
 
     doc.rect(0, 0, A4_WIDTH_PT, A4_HEIGHT_PT).fill(PDF_BACKGROUND_COLOR);
@@ -184,7 +183,7 @@ export async function generatePoster(
       SVGtoPDF(doc, svg, bouquetX, bouquetY, {
         width: BOUQUET_WIDTH_PT,
         height: bouquetHeightPt,
-        preserveAspectRatio: 'xMidYMid meet',
+        preserveAspectRatio: "xMidYMid meet",
         assumePt: true,
       });
     } catch (err) {
@@ -196,14 +195,14 @@ export async function generatePoster(
 
     if (title && title.trim()) {
       doc
-        .font(useTitleFont ? 'PosterTitle' : 'Helvetica')
+        .font(useTitleFont ? "PosterTitle" : "Helvetica")
         .fontSize(TITLE_FONT_SIZE)
-        .fillColor('#000000');
+        .fillColor("#000000");
 
       const titleHeight = getTextHeight(doc, title, CONTENT_WIDTH_PT);
       doc.text(title, MARGIN_PT, y, {
         width: CONTENT_WIDTH_PT,
-        align: 'center',
+        align: "center",
         lineGap: TITLE_FONT_SIZE * (TITLE_LINE_HEIGHT - 1),
         characterSpacing: TITLE_CHARACTER_SPACING,
       });
@@ -212,13 +211,13 @@ export async function generatePoster(
 
     if (names && names.trim()) {
       doc
-        .font(useNamesFont ? 'PosterNames' : 'Helvetica')
+        .font(useNamesFont ? "PosterNames" : "Helvetica")
         .fontSize(NAMES_FONT_SIZE)
-        .fillColor('#000000');
+        .fillColor("#000000");
 
       doc.text(names, MARGIN_PT, y, {
         width: CONTENT_WIDTH_PT,
-        align: 'center',
+        align: "center",
         lineGap: NAMES_FONT_SIZE * (NAMES_LINE_HEIGHT - 1),
         characterSpacing: NAMES_CHARACTER_SPACING,
       });
@@ -254,7 +253,7 @@ function drawPosterPageContent(
   SVGtoPDF(doc, svg, bouquetX, bouquetY, {
     width: BOUQUET_WIDTH_PT,
     height: bouquetHeightPt,
-    preserveAspectRatio: 'xMidYMid meet',
+    preserveAspectRatio: "xMidYMid meet",
     assumePt: true,
   });
 
@@ -262,14 +261,14 @@ function drawPosterPageContent(
 
   if (title && title.trim()) {
     doc
-      .font(useTitleFont ? 'PosterTitle' : 'Helvetica')
+      .font(useTitleFont ? "PosterTitle" : "Helvetica")
       .fontSize(TITLE_FONT_SIZE)
-      .fillColor('#000000');
+      .fillColor("#000000");
 
     const titleHeight = getTextHeight(doc, title, CONTENT_WIDTH_PT);
     doc.text(title, MARGIN_PT, y, {
       width: CONTENT_WIDTH_PT,
-      align: 'center',
+      align: "center",
       lineGap: TITLE_FONT_SIZE * (TITLE_LINE_HEIGHT - 1),
       characterSpacing: TITLE_CHARACTER_SPACING,
     });
@@ -278,13 +277,13 @@ function drawPosterPageContent(
 
   if (names && names.trim()) {
     doc
-      .font(useNamesFont ? 'PosterNames' : 'Helvetica')
+      .font(useNamesFont ? "PosterNames" : "Helvetica")
       .fontSize(NAMES_FONT_SIZE)
-      .fillColor('#000000');
+      .fillColor("#000000");
 
     doc.text(names, MARGIN_PT, y, {
       width: CONTENT_WIDTH_PT,
-      align: 'center',
+      align: "center",
       lineGap: NAMES_FONT_SIZE * (NAMES_LINE_HEIGHT - 1),
       characterSpacing: NAMES_CHARACTER_SPACING,
     });
@@ -300,19 +299,19 @@ export async function generateMultiPagePoster(
   },
 ): Promise<GeneratePosterResult> {
   if (pages.length === 0) {
-    throw new Error('At least one page is required');
+    throw new Error("At least one page is required");
   }
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
-      size: 'A4',
+      size: "A4",
       margin: 0,
       autoFirstPage: true,
     });
 
     const chunks: Buffer[] = [];
-    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-    doc.on('end', () => {
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => {
       const buffer = Buffer.concat(chunks);
       ensureOutputDir();
       const filename = generateFilename(
@@ -325,16 +324,16 @@ export async function generateMultiPagePoster(
       fs.writeFileSync(filepath, buffer);
       resolve({ filename, path: filepath, buffer });
     });
-    doc.on('error', reject);
+    doc.on("error", reject);
 
     const useTitleFont = fontExists(FONT_TITLE);
     const useNamesFont = fontExists(FONT_NAMES);
 
     if (useTitleFont) {
-      doc.registerFont('PosterTitle', FONT_TITLE);
+      doc.registerFont("PosterTitle", FONT_TITLE);
     }
     if (useNamesFont) {
-      doc.registerFont('PosterNames', FONT_NAMES);
+      doc.registerFont("PosterNames", FONT_NAMES);
     }
 
     for (let i = 0; i < pages.length; i++) {

@@ -48,7 +48,7 @@ export const BACK_TEXT_PROPERTY_NAMES = [
 /** Base fan angles (deg) before each flower's `baseRotation`. Wider + even steps avoid “tiny outer” look from over-shrinking + uneven gaps. */
 export const LAYOUT_ANGLES: Record<number, number[]> = {
   1: [0],
-  2: [-15, 25],
+  2: [-10, 15],
   3: [-20, 0, 20],
   4: [-25, -10, 10, 25],
   5: [-15, -8, 0, 8, 15],
@@ -136,8 +136,8 @@ export const CHARM_SHAPE_CONFIG: Record<CharmShape, CharmShapeConfig> = {
   poster: {
     bindingPointX: 0.5,
     bindingPointY: 0.63,
-    scaleX: 1.45,
-    scaleY: 1.45,
+    scaleX: 1.3,
+    scaleY: 1.3,
     // scaleX: SVG_CONFIG.viewBoxWidth / BASE_FLOWER_HEIGHT,
     // scaleY: SVG_CONFIG.viewBoxHeight / BASE_FLOWER_HEIGHT,
   },
